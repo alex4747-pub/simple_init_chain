@@ -25,8 +25,9 @@
 #ifndef INCLUDE_SIMPLE_INIT_CHAIN_H_
 #define INCLUDE_SIMPLE_INIT_CHAIN_H_
 
-#include <cassert>
 #include <cstddef>
+#include <map>
+#include <string>
 
 // Let us make use of modern c++ functionality
 // while being backward compatible with classic
@@ -58,17 +59,54 @@
 namespace simple {
 class InitChain {
  public:
-  static bool Run() {
+  // Just to save on typing
+  //
+#if __cplusplus >= 201103L
+  using ConfigMap = std::map<std::string, std::string>;
+#else
+  typedef std::map<std::string, std::string> ConfigMap;
+#endif
+
+  static bool Run(ConfigMap const& config_map = ConfigMap()) {
+    static bool have_failure = false;
+
+    // Faile repeated calls or calls afer failure
+    //
     if (!RunGuard()) {
-      assert(false);
       return false;
     }
 
-    for (El* cur = ListAccess(); cur != NULLPTR; cur = cur->GetNext()) {
-      if (!cur->DoInit()) {
+    El* prev = NULLPTR;
+    El* cur = ListAccess();
+
+    while (cur != NULLPTR) {
+      // Make sure elements that do not support
+      // reset are called only once
+      //
+      if (!cur->HaveReset()) {
+        if (prev != NULLPTR) {
+          // Skip current elemnt the next time
+          //
+          prev->SetNext(cur->GetNext());
+        } else {
+          // Discard leading element
+          //
+          ListAccess(NULLPTR, true);
+        }
+        // Note we do not advance prev here
+        //
+      } else {
+        prev = cur;
+      }
+
+      if (!cur->DoInit(config_map)) {
         // Only fatal failures are returned through this interface
+        //
+        RunGuard(kFailure);
         return false;
       }
+
+      cur = cur->GetNext();
     }
 
     return true;
@@ -77,57 +115,61 @@ class InitChain {
   // Reset initialization status
   // It is intended for unit-testing
   //
-  static void Reset() {
-    // Reset the run guard
+  static void Reset(ConfigMap const& config_map = ConfigMap()) {
+    // Reset the run guard, prevent
+    // further callse after failure
     //
-    RunGuard(true);
+    if (!RunGuard(kReset)) {
+      return;
+    }
 
     for (El* cur = ListAccess(); cur != NULLPTR; cur = cur->GetNext()) {
-      cur->DoReset();
+      cur->DoReset(config_map);
     }
   }
 
-  typedef bool (*InitFunc)(int level);
-  typedef void (*ResetFunc)(int level);
+  typedef bool (*InitFunc)(int level, ConfigMap const& config_map);
+  typedef void (*ResetFunc)(int level, ConfigMap const& config_map);
 
   class El {
    public:
-    El(int level, InitFunc init_func, ResetFunc reset_func) NOEXCEPT
+    El(int level, InitFunc init_func, ResetFunc reset_func = NULLPTR) NOEXCEPT
         : next_(),
           level_(level),
           init_func_(init_func),
           reset_func_(reset_func) {
-      assert(init_func_);
       ListAccess(this);
     }
 
     ~El() NOEXCEPT {}
 
-    size_t GetLevel() const NOEXCEPT { return level_; }
+    int GetLevel() const NOEXCEPT { return level_; }
 
     El* GetNext() NOEXCEPT { return next_; }
 
     void SetNext(El* next) NOEXCEPT { next_ = next; }
 
-    bool DoInit() NOEXCEPT {
+    bool HaveReset() const NOEXCEPT { return reset_func_ != NULLPTR; }
+
+    bool DoInit(ConfigMap const& config_map) NOEXCEPT {
       if (!init_func_) {
         return true;
       }
 
       try {
-        return init_func_(level_);
+        return init_func_(level_, config_map);
       } catch (...) {
         return false;
       }
     }
 
-    void DoReset() NOEXCEPT {
+    void DoReset(ConfigMap const& config_map) NOEXCEPT {
       if (!reset_func_) {
         return;
       }
 
       try {
-        reset_func_(level_);
+        reset_func_(level_, config_map);
       } catch (...) {
       }
     }
@@ -147,38 +189,58 @@ class InitChain {
   // a unit test environment it could be called
   // thousand times. Hence we have reset possibility.
   //
+  // Also we do want to prevent repeated calls
+  // after failure was declared.
+  //
   // In order to be include-only component for pre c++17
   // compilers the list has to be resrepsented by a funciton
   //
-  static bool RunGuard(bool reset = false) NOEXCEPT {
-    static bool value = true;
 
-    if (reset) {
-      value = true;
-      return true;
+  enum RunGuardOp { kRead = 0, kReset, kFailure };
+
+  static bool RunGuard(RunGuardOp op = kRead) NOEXCEPT {
+    static bool value = true;
+    static bool failed = false;
+
+    if (failed) {
+      return false;
     }
 
-    bool ret = value;
-    value = false;
+    switch (op) {
+      case kRead:
+        if (value) {
+          value = false;
+          return true;
+        }
+        return false;
 
-    return ret;
+      case kReset:
+        value = true;
+        break;
+
+      case kFailure:
+        failed = true;
+        value = false;
+        break;
+    }
+
+    return value;
   }
 
   // In order to be include-only component for pre c++17
   // compilers the list has to be resrepsented by a funciton
   //
-  static El* ListAccess(El* el = NULLPTR) NOEXCEPT {
+  static El* ListAccess(El* el = NULLPTR, bool discard_head = false) NOEXCEPT {
     static El* the_list = NULLPTR;
 
     if (el == NULLPTR) {
+      if (discard_head && the_list != NULLPTR) {
+        the_list = the_list->GetNext();
+      }
       return the_list;
     }
 
-    // We need a sorted list and if we have to use
-    // function to build it we can sort it on creation
-    // to avoid sorting as an operational step
-    //
-    assert(el->GetNext() == NULLPTR);
+    el->SetNext(NULLPTR);
 
     El* prev = NULLPTR;
     El* cur = the_list;

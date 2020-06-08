@@ -25,6 +25,7 @@
 
 #include <simple_init_chain.h>
 #include <test_comp_b.h>
+#include <test_counter.h>
 #include <cassert>
 #include <iostream>
 
@@ -40,20 +41,22 @@ bool GetCompBState() { return comp_b_state; }
 // Functions
 //
 
-static bool InitFunc(int level) {
+static bool InitFunc(int level, simple::InitChain::ConfigMap const&) {
   assert(!comp_b_state);
   std::cout << "Component-b: init function called: level=" << level
             << std::endl;
   comp_b_state = true;
+  CountInit(level);
   return true;
 }
 
-static void ResetFunc(int level) {
+static void ResetFunc(int level, simple::InitChain::ConfigMap const&) {
   std::cout << "Componnet-b: reset function called: level=" << level
             << std::endl;
   comp_b_state = false;
+  CountReset(level);
 }
 
 // Static chain element
 //
-simple::InitChain::El compBInitChainEl(15, InitFunc, ResetFunc);
+static simple::InitChain::El compBInitChainEl(15, InitFunc, ResetFunc);

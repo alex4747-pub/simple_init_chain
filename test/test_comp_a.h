@@ -27,4 +27,4 @@
 
 bool GetCompAState();
 
-#endif
+#endif  // TEST_COMP_A_H_

@@ -20,35 +20,17 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// This is the test component a
+// NOLINT(build/header_guard)
 //
-#include <simple_init_chain.h>
-#include <test_comp_a.h>
-#include <test_counter.h>
-#include <cassert>
-#include <iostream>
+#ifndef TEST_COMP_D_H_
+#define TEST_COMP_D_H_
 
-// Initialization state
-//
-static bool comp_a_state;
+bool GetCompDState();
 
-bool GetCompAState() { return comp_a_state; }
+// D-component is a special case we can arm failures
+// or excepption
 
-// Initialization chain
-//
+void ArmDFailure();
+void ArmDException();
 
-// Functions
-//
-static bool InitFunc(int level, simple::InitChain::ConfigMap const&) {
-  assert(!comp_a_state);
-  std::cout << "Component-a: init function called: level=" << level
-            << std::endl;
-  comp_a_state = true;
-  CountInit(level);
-  return true;
-}
-
-// Static chain element, will use negative level to check
-// processing.
-//
-static simple::InitChain::El compAInitChainEl(-10, InitFunc);
+#endif  // TEST_COMP_D_H_

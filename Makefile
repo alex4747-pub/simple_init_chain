@@ -14,15 +14,15 @@ clean:
 	cd test; $(MAKE) clean
 
 format:
-	$(FORMAT) --style=google -i ./include/simple_init_chain.h
+	$(FORMAT) --style=google -i ./simple_init_chain.h
 	cd test; $(MAKE) format
 
 tidy:
-	$(TIDY) --fix -extra-arg-before=-xc++ ./include/simple_init_chain.h --  -std=c++11
+	$(TIDY) --fix -extra-arg-before=-xc++ ./simple_init_chain.h --  -std=c++11
 	cd test; $(MAKE) tidy
 
 cpplint:
-	$(CPPLINT) ../include/simple_init_chain.h
+	$(CPPLINT) ./simple_init_chain.h
 	cd test; $(MAKE) cpplint
 
 

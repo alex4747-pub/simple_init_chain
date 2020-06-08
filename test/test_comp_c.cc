@@ -20,19 +20,19 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// This is the test component a
+// This is the test component c
 //
 #include <simple_init_chain.h>
-#include <test_comp_a.h>
+#include <test_comp_c.h>
 #include <test_counter.h>
 #include <cassert>
 #include <iostream>
 
 // Initialization state
 //
-static bool comp_a_state;
+static bool comp_c_state;
 
-bool GetCompAState() { return comp_a_state; }
+bool GetCompCState() { return comp_c_state; }
 
 // Initialization chain
 //
@@ -40,15 +40,14 @@ bool GetCompAState() { return comp_a_state; }
 // Functions
 //
 static bool InitFunc(int level, simple::InitChain::ConfigMap const&) {
-  assert(!comp_a_state);
-  std::cout << "Component-a: init function called: level=" << level
+  assert(!comp_c_state);
+  std::cout << "Component-c: init function called: level=" << level
             << std::endl;
-  comp_a_state = true;
+  comp_c_state = true;
   CountInit(level);
   return true;
 }
 
-// Static chain element, will use negative level to check
-// processing.
+// Static chain element
 //
-static simple::InitChain::El compAInitChainEl(-10, InitFunc);
+static simple::InitChain::El compCInitChainEl(20, InitFunc);

@@ -27,4 +27,4 @@
 
 bool GetCompBState();
 
-#endif
+#endif  // TEST_COMP_B_H_

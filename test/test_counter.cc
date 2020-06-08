@@ -19,36 +19,37 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-
-// This is the test component a
-//
-#include <simple_init_chain.h>
-#include <test_comp_a.h>
 #include <test_counter.h>
-#include <cassert>
-#include <iostream>
+#include <utility>
 
-// Initialization state
-//
-static bool comp_a_state;
+static CountMap init_map;
+static CountMap reset_map;
 
-bool GetCompAState() { return comp_a_state; }
+void CountInit(int level) {
+  std::pair<CountMap::iterator, bool> res =
+      init_map.insert(CountMap::value_type(level, 1));
 
-// Initialization chain
-//
+  if (res.second) {
+    return;
+  }
 
-// Functions
-//
-static bool InitFunc(int level, simple::InitChain::ConfigMap const&) {
-  assert(!comp_a_state);
-  std::cout << "Component-a: init function called: level=" << level
-            << std::endl;
-  comp_a_state = true;
-  CountInit(level);
-  return true;
+  (*res.first).second++;
+
+  return;
 }
 
-// Static chain element, will use negative level to check
-// processing.
-//
-static simple::InitChain::El compAInitChainEl(-10, InitFunc);
+void CountReset(int level) {
+  std::pair<CountMap::iterator, bool> res =
+      reset_map.insert(CountMap::value_type(level, 1));
+
+  if (res.second) {
+    return;
+  }
+
+  (*res.first).second++;
+
+  return;
+}
+
+CountMap const& GetInitMap() { return init_map; }
+CountMap const& GetResetMap() { return reset_map; }
