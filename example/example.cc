@@ -25,7 +25,7 @@
 
 // Just run linked component initialization
 // then reset and run it again
-int main(int argc, char** argv) {
+int main(int, char**) {
   std::cout << "==========================\n";
   std::cout << "Run\n";
 

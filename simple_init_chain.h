@@ -41,8 +41,6 @@ class InitChain {
   using ConfigMap = std::map<std::string, std::string>;
 
   static bool Run(ConfigMap const& config_map = ConfigMap()) {
-    static bool have_failure = false;
-
     // Fail repeated calls or calls afer failure
     //
     if (!ready_) {

@@ -1,5 +1,5 @@
 STD=-std=c++11
-CXXFLAGS = -g -O0 -I.. -I.
+CXXFLAGS = -g -O0 -I.. -I. -Wall -Wextra -Werror
 
 USE_GCC=
 

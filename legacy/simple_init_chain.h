@@ -68,8 +68,6 @@ class InitChain {
 #endif
 
   static bool Run(ConfigMap const& config_map = ConfigMap()) {
-    static bool have_failure = false;
-
     // Faile repeated calls or calls afer failure
     //
     if (!RunGuard()) {
