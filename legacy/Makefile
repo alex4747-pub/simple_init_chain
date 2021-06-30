@@ -18,7 +18,7 @@ format:
 	cd test; $(MAKE) format
 
 tidy:
-	$(TIDY) --fix -extra-arg-before=-xc++ ./simple_init_chain.h --  -std=c++17
+	$(TIDY) --fix -extra-arg-before=-xc++ ./simple_init_chain.h --  -std=c++11
 	cd test; $(MAKE) tidy
 
 cpplint:

@@ -1,7 +1,7 @@
-STD=-std=c++17
+STD=-std=c++11
 CXXFLAGS = -g -O0 -I.. -I.
 
-USE_GCC=yes
+USE_GCC=
 
 ifeq ($(USE_GCC),)
 CXX = clang++
@@ -33,9 +33,12 @@ INCS = \
      test_counter.h
 
 
-all: test_simple_init_chain
+all: test_simple_init_chain test_simple_init_chain_std
 
 test_simple_init_chain: $(SRCS) $(INCS) ../simple_init_chain.h Makefile
+	$(CXX) -o $@ $(CXXFLAGS) $(SRCS) $(LIBS)
+
+test_simple_init_chain_std: $(SRCS) $(INCS) ../simple_init_chain.h Makefile
 	$(CXX) -o $@ $(CXXFLAGS) $(STD) $(SRCS) $(LIBS)
 
 format:
@@ -48,18 +51,30 @@ cpplint:
 	$(CPPLINT) $(SRCS) $(INCS) ../simple_init_chain.h
 
 clean:
-	rm -rf test_simple_init_chain *~ *.dSYM
+	rm -rf test_simple_init_chain test_simple_init_chain_std *~ *.dSYM
 
-run-test: test_simple_init_chain
+run-test: test_simple_init_chain test_simple_init_chain_std
 	@echo
 	@echo "Main test"
 	./test_simple_init_chain
+	@echo
+	@echo
+	@echo "Main std-test"
+	./test_simple_init_chain_std
 	@echo
 	@echo
 	@echo "Exception test"
 	./test_simple_init_chain -e
 	@echo
 	@echo
+	@echo "Exception std-test"
+	./test_simple_init_chain_std -e
+	@echo
+	@echo
 	@echo "Failure test"
 	./test_simple_init_chain -f
 	@echo
+	@echo
+	@echo "Failure std-test"
+	./test_simple_init_chain_std -f
+

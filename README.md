@@ -4,6 +4,12 @@ This is very simple component allowing to simply resolve static
 initialization issues, by linking initialization functions into
 a statically constructed list.
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+The important part is that there are source code dependencies
+between entity that is running initialization and initialization
+components. The procedure is completely link-time defined:
+all linked component are initialized.
+
 It also provides a basis to construct a proper singleton.
 
 # Suggested Use of Level Values
