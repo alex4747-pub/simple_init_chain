@@ -2,9 +2,12 @@
 
 This is very simple component allowing to simply resolve static
 initialization issues, by linking initialization functions into
-a statically constructed list.
+a statically constructed list. It is implementing statically
+constructed "Chain of responsibility" design pattern for the
+purpose of initialization.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 The important part is that there are source code dependencies
 between entity that is running initialization and initialization
 components. The procedure is completely link-time defined:
