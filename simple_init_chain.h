@@ -29,174 +29,182 @@
 #include <map>
 #include <string>
 
-#if __cplusplus < 201703L
-#error "At least c++17 is required"
+#if __cplusplus < 201103L
+#error "At least c++11 is required"
 #endif
 
-namespace simple {
+namespace simple_init_chain {
+
+// In order to have multiple independent chains
+// it has to be a tagged template
+//
+// For simplicity there is also a default tag
+//
+struct DefaultTag {};
+
+// The config map is used to pass arbitrary configuration
+// information to init-worker instances
+
+template <typename Tag = DefaultTag>
 class InitChain {
  public:
-  // Just to save on typing
-  //
-  using ConfigMap = std::map<std::string, std::string>;
+  static bool Run(std::map<std::string, std::string> const& config_map =
+                      std::map<std::string, std::string>()) {
+    InitChain* cur = *GetList();
 
-  static bool Run(ConfigMap const& config_map = ConfigMap()) {
-    // Fail repeated calls or calls afer failure
-    //
-    if (!ready_) {
-      return false;
-    }
-    ready_ = false;
+    bool ret = true;
+    while (cur) {
+      if (cur->init_done_ && !cur->multi_init_) {
+        // Ignore duplicate init calls
+        cur = cur->next_;
+        continue;
+      }
 
-    El* prev = nullptr;
-    El* cur = the_list_;
+      // Just in case init worker deletes self
+      // from inside InitFunc
+      InitChain* tmp = cur->next_;
 
-    while (cur != nullptr) {
-      // Make sure elements that do not support
-      // reset are called only once
-      //
-      if (!cur->HaveReset()) {
-        if (prev != nullptr) {
-          // Skip current elemnt the next time
-          //
-          prev->SetNext(cur->GetNext());
-        } else {
-          // Discard leading element
-          //
-          the_list_ = the_list_->GetNext();
+      cur->init_done_ = true;
+
+      try {
+        if (!cur->InitFunc(config_map)) {
+          ret = false;
         }
-        // Note we do not advance prev here
-        //
-      } else {
-        prev = cur;
+      } catch (...) {
+        ret = false;
       }
-
-      if (!cur->DoInit(config_map)) {
-        // Only fatal failures are returned through this interface
-        //
-        ready_ = false;
-        failed_ = true;
-        return false;
-      }
-
-      cur = cur->GetNext();
+      cur = tmp;
     }
-
-    return true;
+    return ret;
   }
 
-  // Reset initialization status
-  // It is intended for unit-testing
-  //
-  static void Reset(ConfigMap const& config_map = ConfigMap()) {
-    // Reset the run guard, prevent
-    // further calls after failure
-    //
-    if (failed_) {
+  static void Reset(std::map<std::string, std::string> const& config_map =
+                        std::map<std::string, std::string>()) {
+    InitChain* cur = *GetList();
+
+    while (cur) {
+      // Prepare to handle init_done_
+      // change on reset
+      cur->init_done_copy_ = cur->init_done_;
+      cur->init_done_ = false;
+
+      // Just in case init worker deletes self
+      // from inside ResetFunc
+      InitChain* tmp = cur->next_;
+
+      try {
+        cur->ResetFunc(config_map);
+      } catch (...) {
+      }
+
+      cur = tmp;
+    }
+  }
+
+  virtual ~InitChain() noexcept {
+    InitChain* prev = nullptr;
+    InitChain* cur = *GetList();
+
+    while (cur) {
+      if (cur == this) {
+        break;
+      }
+      prev = cur;
+      cur = cur->next_;
+    }
+
+    if (!cur) {
       return;
     }
 
-    ready_ = true;
-
-    for (El* cur = the_list_; cur != nullptr; cur = cur->GetNext()) {
-      cur->DoReset(config_map);
+    if (prev == nullptr) {
+      InitChain** list_ptr = GetList();
+      *list_ptr = this->next_;
+      return;
     }
+
+    prev->next_ = this->next_;
+    return;
   }
 
-  typedef bool (*InitFunc)(int level, ConfigMap const& config_map);
-  typedef void (*ResetFunc)(int level, ConfigMap const& config_map);
+  // Allow to read back parameters and state
+  //
+  int GetLevel() const noexcept { return level_; }
+  bool GetMultiInit() const noexcept { return multi_init_; }
+  bool GetInitDone_() const noexcept { return init_done_; }
 
-  class El {
-   public:
-    El(int level, InitFunc init_func, ResetFunc reset_func = nullptr) noexcept
-        : next_(),
-          level_(level),
-          init_func_(init_func),
-          reset_func_(reset_func) {
-      Insert(this);
-    }
+ protected:
+  // level     - determines the order of execution
+  //             lower values go first, coould be
+  //             negative
+  //
+  // multi-init - if set every init will cause action
+  //
+  explicit InitChain(int level, bool multi_init = false) noexcept
+      : next_(),
+        init_done_(),
+        init_done_copy_(),
+        level_(level),
+        multi_init_(multi_init) {
+    InitChain* prev = nullptr;
+    InitChain* cur = *GetList();
 
-    ~El() noexcept {}
-
-    int GetLevel() const noexcept { return level_; }
-
-    El* GetNext() noexcept { return next_; }
-
-    void SetNext(El* next) noexcept { next_ = next; }
-
-    bool HaveReset() const noexcept { return reset_func_ != nullptr; }
-
-    bool DoInit(ConfigMap const& config_map) noexcept {
-      if (!init_func_) {
-        return true;
-      }
-
-      try {
-        return init_func_(level_, config_map);
-      } catch (...) {
-        return false;
-      }
-    }
-
-    void DoReset(ConfigMap const& config_map) noexcept {
-      if (!reset_func_) {
-        return;
-      }
-
-      try {
-        reset_func_(level_, config_map);
-      } catch (...) {
-      }
-    }
-
-   private:
-    El* next_;
-    int level_;
-    InitFunc init_func_;
-    ResetFunc reset_func_;
-  };
-
- private:
-  static void Insert(El* el) {
-    el->SetNext(nullptr);
-
-    El* prev = nullptr;
-    El* cur = the_list_;
-
-    while (cur != nullptr) {
-      if (el->GetLevel() <= cur->GetLevel()) {
-        el->SetNext(cur);
+    while (cur) {
+      if (level_ < cur->level_) {
         break;
       }
-
       prev = cur;
-      cur = cur->GetNext();
+      cur = cur->next_;
     }
 
+    this->next_ = cur;
+
     if (prev == nullptr) {
-      the_list_ = el;
+      InitChain** list_ptr = GetList();
+      *list_ptr = this;
     } else {
-      prev->SetNext(el);
+      prev->next_ = this;
     }
   }
 
-  // Note: no danger of static initialization order
-  // problem.
-  static inline El* the_list_;
-
-  // We expect that init operation will be
-  // performed once.
+ private:
+  // Function that actually does initialization, default is nop
   //
-  // However, if  this code is executed in
-  // a unit test environment it could be called
-  // thousand times. Hence we have reset possibility.
-  //
-  // Also we do want to prevent repeated calls
-  // after failure was declared.
+  virtual bool InitFunc(std::map<std::string, std::string> const&) {
+    return true;
+  }
 
-  static inline bool ready_ = true;
-  static inline bool failed_ = false;
+  // Function that actually does reset, the default will keep
+  // init_done_ unchanged
+  //
+  virtual void ResetFunc(std::map<std::string, std::string> const&) {
+    // Keep init_done_ unchanged, restore it from saved copy
+    init_done_ = init_done_copy_;
+  }
+
+  InitChain* next_;  // Next worker in the list
+  bool init_done_;   // Init-done flag
+
+  // If we did not derive the ResetFunc
+  // we want to keep init_done_ value across
+  // reset.
+  //
+  // If we did derive the ResetFunc we
+  // want it to be cleared.
+  //
+  // Hence we have to keep this extra bit
+  // of data
+  bool init_done_copy_;
+  int level_;        // Level
+  bool multi_init_;  // Multi init support
+
+ private:
+  static InitChain** GetList() {
+    static InitChain* the_list_;
+    return &the_list_;
+  }
 };
-}  // namespace simple
+
+}  // namespace simple_init_chain
 
 #endif  // INCLUDE_SIMPLE_INIT_CHAIN_H_
