@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)
+// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)Run
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -20,51 +20,36 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// This is the test component b
-//
-
-#include <comp_b.h>
-#include <counter.h>
-#include <simple_init_chain.h>
-#include <tags.h>
+#ifndef TEST_COMMON_EVENINITCHAIN_H_
+#define TEST_COMMON_EVENINITCHAIN_H_
 
 #include <cassert>
+#include <cstddef>
+#include <functional>
 #include <iostream>
-#include <map>
-#include <string>
+#include <mutex>  // NOLINT we need the standard mutex
 
-// Initialization state
+#if __cplusplus < 201103L
+#error "At least c++11 is required"
+#endif
+
+// This the default version. It places init chain code
+// into the 'simple' namespace.
 //
-static bool comp_b_state;
-
-bool GetCompBState() { return comp_b_state; }
-
-// Initialization chain
+// Users can add additional independent chains by placing them
+// into namespaces of their choice
 //
-// Concrete chain element
+// See README.md and comments in InitChain.inl for
+// detais
 //
-class InitWorkerB : public simple_init_chain::InitChain<CHAIN_TAG> {
- public:
-  explicit InitWorkerB(int level) : InitChain<CHAIN_TAG>(level) {}
 
- private:
-  bool InitFunc(std::map<std::string, std::string> const&) override {
-    assert(!comp_b_state);
-    std::cout << "Component-b: init function called: level=" << GetLevel()
-              << std::endl;
-    comp_b_state = true;
-    CountInit(GetLevel());
-    return true;
-  }
+namespace even {
 
-  void ResetFunc(std::map<std::string, std::string> const&) override {
-    std::cout << "Componnet-b: reset function called: level=" << GetLevel()
-              << std::endl;
-    comp_b_state = false;
-    CountReset(GetLevel());
-  }
-};
+#define RUN_MUTEX_TYPEDEF using RUN_MUTEX = std::mutex;
+#define LINK_MUTEX_TYPEDEF using LINK_MUTEX = std::mutex;
 
-// Static chain element
-//
-static InitWorkerB initWorkerB(15);
+#include "InitChain.inl"
+
+}  // namespace even
+
+#endif  // TEST_COMMON_EVENINITCHAIN_H_

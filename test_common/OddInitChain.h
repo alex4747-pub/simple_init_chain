@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)
+// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)Run
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -20,17 +20,36 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// NOLINT(build/header_guard)
+#ifndef TEST_COMMON_ODDINITCHAIN_H_
+#define TEST_COMMON_ODDINITCHAIN_H_
+
+#include <cassert>
+#include <cstddef>
+#include <functional>
+#include <iostream>
+#include <mutex>  // NOLINT we need the standard mutex
+
+#if __cplusplus < 201103L
+#error "At least c++11 is required"
+#endif
+
+// This the default version. It places init chain code
+// into the 'simple' namespace.
 //
-#ifndef COMP_D_H_
-#define COMP_D_H_
+// Users can add additional independent chains by placing them
+// into namespaces of their choice
+//
+// See README.md and comments in InitChain.inl for
+// detais
+//
 
-bool GetCompDState();
+namespace odd {
 
-// D-component is a special case we can arm failures
-// or excepption
+#define RUN_MUTEX_TYPEDEF using RUN_MUTEX = std::mutex;
+#define LINK_MUTEX_TYPEDEF using LINK_MUTEX = std::mutex;
 
-void ArmDFailure();
-void ArmDException();
+#include "InitChain.inl"
 
-#endif  // COMP_D_H_
+}  // namespace odd
+
+#endif  // TEST_COMMON_ODDINITCHAIN_H_

@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)
+// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)Run
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -20,11 +20,43 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// NOLINT(build/header_guard)
+#ifndef INITCHAINTAGGED_H_
+#define INITCHAINTAGGED_H_
+
+#include <functional>
+#include <mutex>  // NOLINT we need the standard mutex
+
+#if __cplusplus < 201103L
+#error "At least c++11 is required"
+#endif
+
+// This version uses template tag type to support
+// multiple chains
 //
-#ifndef COMP_E_H_
-#define COMP_E_H_
+// See README.md and comments in InitChain.inl for
+// detais
+//
 
-bool GetCompEState();
+namespace simple {
 
-#endif  // COM_E_H_
+// Tagged initialization chain
+//
+
+// No need in typedefs when we use templates
+//
+#define RUN_MUTEX_TYPEDEF
+#define LINK_MUTEX_TYPEDEF
+
+template <typename TAG, typename RUN_MUTEX = std::mutex,
+          typename LINK_MUTEX = std::mutex>
+#include "InitChain.inl"
+
+template <typename TAG, typename RUN_MUTEX, typename LINK_MUTEX>
+bool InitChain<TAG, RUN_MUTEX, LINK_MUTEX>::AllowReset() {
+  static_assert(allow_helper(), "use specialised config");
+  return false;
+}
+
+}  // namespace simple
+
+#endif  // INITCHAINTAGGED_H_

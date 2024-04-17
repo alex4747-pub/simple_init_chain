@@ -20,13 +20,40 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// NOLINT(build/header_guard)
-//
-#ifndef COMP_A_H_
-#define COMP_A_H_
+#ifndef TEST_COMMON_COMPA_H_
+#define TEST_COMMON_COMPA_H_
 
-bool GetCompAState();
+#include <TestCommon.h>
 
-void ArmDeleteAOnInit();
+// The simplest form of initialization  we expose chain-link
+// in the interface the chain-link object is a static member
+// of the class. There is no reset operation;
 
-#endif  // COMP_A_H_
+// Application is a singleton
+class CompA {
+ public:
+  CompA& GetInstance() noexcept;
+
+  // Just an example of unrelated function
+  int GetCounter() noexcept;
+
+  // If shared library is used call to this function from main
+  // will cause share library to be included into image by linker
+  static bool Check() noexcept;
+
+ private:
+  CompA() noexcept;
+  ~CompA();
+
+  int counter_;
+  static CompA* self_;
+
+  static bool Init();
+
+  // We use levels for test verification so it is a member of the class
+  static int const init_level_;
+
+  static INIT_CHAIN::Link init_helper_;
+};
+
+#endif  // TEST_COMMON_COMPA_H_

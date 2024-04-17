@@ -1,0 +1,4 @@
+Using two chains one will be used by "odd" components (b,d)
+another by "even" ones (a, c, e). Use namespaces to define
+two chains.
+

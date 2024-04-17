@@ -22,41 +22,65 @@
 
 // This is the test component e
 //
-#include <comp_e.h>
-#include <counter.h>
-#include <simple_init_chain.h>
-#include <tags.h>
+
+#include <CompE.h>
+#include <Recorder.h>
+#include <TestCommon.h>
 
 #include <cassert>
+#include <exception>
 #include <iostream>
-#include <map>
 #include <string>
 
-// Initialization state
-//
-static bool comp_e_state;
-
-bool GetCompEState() { return comp_e_state; }
-
-// Initialization chain
-//
-// Concrete chain element
-//
-class InitWorkerE : public simple_init_chain::InitChain<CHAIN_TAG> {
+class CompE::Helper final : public INIT_CHAIN::Link {
  public:
-  explicit InitWorkerE(int level) : InitChain<CHAIN_TAG>(level) {}
+  Helper(CompE* owner, int level)
+      : Link(level, std::bind(&CompE::Helper::Init, this),
+             std::bind(&CompE::Helper::Reset, this)),
+        owner_(owner) {}
 
  private:
-  bool InitFunc(std::map<std::string, std::string> const&) override {
-    assert(!comp_e_state);
+  bool Init() {
     std::cout << "Component-e: init function called: level=" << GetLevel()
               << std::endl;
-    comp_e_state = true;
-    CountInit(GetLevel());
+    Recorder::SetState("e", true);
+    Recorder::CountInit(GetLevel());
+
+    owner_->init_done_ = true;
+
+    if (GetLevel() & 0x1) {
+      // Demonstrate deletion of link from inside
+      // Init function
+      owner_->helper_.reset();
+    }
+
     return true;
   }
+
+  bool Reset() {
+    std::cout << "Component-e: reset function called: level=" << GetLevel()
+              << std::endl;
+    Recorder::SetState("e", false);
+    Recorder::CountReset(GetLevel());
+
+    owner_->init_done_ = false;
+
+    if (GetLevel() & 0x2) {
+      // Demonstrate deletion of link from inside
+      // Reset function
+      owner_->helper_.reset();
+    }
+
+    return true;
+  }
+  CompE* owner_;
 };
 
-// Static chain element
-//
-static InitWorkerE initWorkerE(30);
+CompE::CompE(int val)
+    : val_(val), init_done_(), helper_(new Helper(this, 40 + val)) {}
+
+bool CompE::Check() noexcept { return true; }
+
+// Static instances of comp-e class
+static CompE compE1(1);
+static CompE compE2(2);

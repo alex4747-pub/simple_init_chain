@@ -20,43 +20,34 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// This is the test component a
-//
-#include <comp_a.h>
-#include <counter.h>
-#include <simple_init_chain.h>
-#include <tags.h>
+#ifndef TEST_COMMON_RECORDER_H_
+#define TEST_COMMON_RECORDER_H_
 
-#include <cassert>
-#include <iostream>
+#include <cstddef>
 #include <map>
 #include <string>
 
-// Initialization state
-//
-static bool comp_a_state;
-
-bool GetCompAState() { return comp_a_state; }
-
-// Initialization chain
-//
-// Concrete chain element
-//
-class InitWorkerA : public simple_init_chain::InitChain<CHAIN_TAG> {
+class Recorder final {
  public:
-  explicit InitWorkerA(int level) : InitChain<CHAIN_TAG>(level) {}
+  // Count init and reset events per level
+  static void CountInit(int level);
+  static void CountReset(int level);
+
+  // Get the level -> number-of-events map for inspection
+  static std::map<int, size_t> const& GetInitMap() noexcept;
+  static std::map<int, size_t> const& GetResetMap() noexcept;
+
+  // Set/get state for component
+  static void SetState(std::string const& name, bool);
+  static size_t GetState(std::string const& name) noexcept;
+
+  // Get Map of component states
+  static std::map<std::string, size_t> const& GetStateMap() noexcept;
 
  private:
-  bool InitFunc(std::map<std::string, std::string> const&) override {
-    assert(!comp_a_state);
-    std::cout << "Component-a: init function called: level=" << GetLevel()
-              << std::endl;
-    comp_a_state = true;
-    CountInit(GetLevel());
-    return true;
-  }
+  static std::map<int, size_t> init_map_;
+  static std::map<int, size_t> reset_map_;
+  static std::map<std::string, size_t> state_map_;
 };
 
-// Static chain element, will use negative level to test
-// handling of negative values
-static InitWorkerA initWorkerA(-10);
+#endif  // TEST_COMMON_RECORDER_H_

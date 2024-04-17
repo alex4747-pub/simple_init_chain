@@ -1,4 +1,0 @@
-Exercise deletion of init workers.
-We create workers dynamically and then
-delete them as part of init or reset
-operations

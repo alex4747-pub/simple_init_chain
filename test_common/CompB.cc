@@ -20,43 +20,72 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// This is the test component c
+// This is the test component b
 //
-#include <comp_c.h>
-#include <counter.h>
-#include <simple_init_chain.h>
-#include <tags.h>
+
+#include <CompB.h>
+#include <Recorder.h>
 
 #include <cassert>
 #include <iostream>
-#include <map>
 #include <string>
 
-// Initialization state
-//
-static bool comp_c_state;
+CompB* CompB::self_;
+int const CompB::init_level_ = 15;
 
-bool GetCompCState() { return comp_c_state; }
+CompB& CompB::GetInstance() noexcept {
+  assert(self_ != nullptr);
+  return *self_;
+}
 
-// Initialization chain
-//
-// Concrete chain element
-//
-class InitWorkerC : public simple_init_chain::InitChain<CHAIN_TAG> {
- public:
-  explicit InitWorkerC(int level) : InitChain<CHAIN_TAG>(level) {}
+int CompB::GetCounter() noexcept {
+  counter_++;
+  return counter_;
+}
 
- private:
-  bool InitFunc(std::map<std::string, std::string> const&) override {
-    assert(!comp_c_state);
-    std::cout << "Component-c: init function called: level=" << GetLevel()
-              << std::endl;
-    comp_c_state = true;
-    CountInit(GetLevel());
+bool CompB::Check() noexcept { return true; }
+
+CompB::CompB() noexcept : counter_() {
+  assert(self_ == nullptr);
+  self_ = this;
+}
+
+CompB::~CompB() {
+  assert(self_ == this);
+  self_ = nullptr;
+}
+
+bool CompB::Init() {
+  std::cout << "Component-b: init function called: level=" << init_level_
+            << std::endl;
+  Recorder::SetState("b", true);
+  Recorder::CountInit(init_level_);
+
+  if (self_) {
+    // Duplicate inits should not happen
+    assert(false);
     return true;
   }
-};
+
+  CompB* app = new CompB;
+  (void)app;
+
+  // Allow reset operations
+  return true;
+}
+
+bool CompB::Reset() {
+  std::cout << "Component-b: reset function called: level=" << init_level_
+            << std::endl;
+  Recorder::SetState("b", false);
+  Recorder::CountReset(init_level_);
+
+  // Demonstrate delete of the owning singleton
+  // allow operations to continue
+  delete self_;
+  return true;
+}
 
 // Static chain element
 //
-static InitWorkerC initWorkerC(20);
+INIT_CHAIN::Link CompB::init_helper_(init_level_, Init, Reset);

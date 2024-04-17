@@ -32,6 +32,8 @@ MAIN_SRCS = \
 SRCS = $(COMMON_SRCS) $(MAIN_SRCS)
 
 DEP_INCS = \
+     $(COMMON)/EvenTag.h \
+     $(COMMON)/OddTag.h \
      $(COMMON)/Recorder.h \
      $(COMMON)/TestCommon.h \
      ../InitChain.h \
@@ -49,13 +51,28 @@ INCS = \
 TMP_COMMON_SRCS = $(notdir $(COMMON_SRCS))
 COMMON_OBJS = $(patsubst %.cc, %.o, $(TMP_COMMON_SRCS))
 
-all: test_simple_init_chain
+all: test_namesp_init_chain
 
-test_simple_init_chain: test_main.o $(COMMON_OBJS)
+test_namesp_init_chain: test_main.o $(COMMON_OBJS)
 	$(CXX) -o $@ $(CXXFLAGS) test_main.o $(COMMON_OBJS) $(LIBS)
 
 %.o: $(COMMON)/%.cc $(COMMON)/%.h $(DEP_INCS)
 	$(CXX) -c $(CXXFLAGS) $<
+
+CompA.o: $(COMMON)/CompA.cc $(COMMON)/CompA.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_NS_EVEN $<
+
+CompB.o: $(COMMON)/CompB.cc $(COMMON)/CompB.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_NS_ODD $<
+
+CompC.o: $(COMMON)/CompC.cc $(COMMON)/CompC.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_NS_EVEN $<
+
+CompD.o: $(COMMON)/CompD.cc $(COMMON)/CompD.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_NS_ODD $<
+
+CompE.o: $(COMMON)/CompE.cc $(COMMON)/CompE.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_NS_EVEN $<
 
 test_main.o: test_main.cc $(INCS)
 	$(CXX) -c $(CXXFLAGS) $<
@@ -64,25 +81,22 @@ format:
 	$(FORMAT) --style=google -i $(SRCS) test_main.cc $(wildcard $(COMMON)/*.h)
 
 tidy:
-	$(TIDY) --fix -extra-arg-before=-xc++ $(SRCS) test_main.cc $(INCS) -- $(CXXFLAGS) -DRUNNING_CPP_TIDY=1
+	$(TIDY) --fix -extra-arg-before=-xc++ $(SRCS) $(INCS) test_main.cc -- $(CXXFLAGS) -DRUNNING_CPP_TIDY=1
 
 cpplint:
 	$(CPPLINT) $(SRCS) $(wildcard $(COMMON)/*.h)
 
 clean:
-	rm -rf test_simple_init_chain *.o *~ *.dSYM $(COMMON)/*~
+	rm -rf test_namesp_init_chain *.o *~ *.dSYM $(COMMON)/*~
 
-run-test: test_simple_init_chain
+run-test: test_namesp_init_chain
 	@echo
 	@echo "Main test"
-	./test_simple_init_chain
+	./test_namesp_init_chain
 	@echo
-	@echo
-	@echo "Exception test"
-	./test_simple_init_chain -e
-	@echo
-	@echo
-	@echo "Failure test"
-	./test_simple_init_chain -f
-	@echo
+
+print:
+	$(CXX) -E -c $(CXXFLAGS) test_main.cc
+
+
 

@@ -19,32 +19,11 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-#include <counter.h>
 
-#include <utility>
+#ifndef TEST_COMMON_ODDTAG_H_
+#define TEST_COMMON_ODDTAG_H_
 
-static CountMap init_map;
-static CountMap reset_map;
+// Just define a tag type for tagged tests
+struct Odd {};
 
-void CountInit(int level) {
-  auto res = init_map.insert(CountMap::value_type(level, 1));
-
-  if (!res.second) {
-    (*res.first).second++;
-  }
-
-  return;
-}
-
-void CountReset(int level) {
-  auto res = reset_map.insert(CountMap::value_type(level, 1));
-
-  if (!res.second) {
-    (*res.first).second++;
-  }
-
-  return;
-}
-
-CountMap const& GetInitMap() { return init_map; }
-CountMap const& GetResetMap() { return reset_map; }
+#endif  // TEST_COMMON_ODDTAG_H_

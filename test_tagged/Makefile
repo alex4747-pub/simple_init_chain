@@ -17,75 +17,116 @@ FORMAT  = clang-format
 TIDY    = clang-tidy
 CPPLINT = cpplint
 
+
 COMMON_SRCS = \
-     $(COMMON)/comp_a.cc \
-     $(COMMON)/comp_b.cc \
-     $(COMMON)/comp_c.cc \
-     $(COMMON)/comp_d.cc \
-     $(COMMON)/comp_e.cc \
-     $(COMMON)/counter.cc
+     $(COMMON)/CompA.cc \
+     $(COMMON)/CompB.cc \
+     $(COMMON)/CompC.cc \
+     $(COMMON)/CompD.cc \
+     $(COMMON)/CompE.cc \
+     $(COMMON)/Recorder.cc
 
 MAIN_SRCS = \
      test_main.cc
 
 SRCS = $(COMMON_SRCS) $(MAIN_SRCS)
 
-COMMON_INCS = \
-     $(COMMON)/comp_a.h \
-     $(COMMON)/comp_b.h \
-     $(COMMON)/comp_c.h \
-     $(COMMON)/comp_d.h \
-     $(COMMON)/comp_e.h \
-     $(COMMON)/counter.h \
-     $(COMMON)/tags.h
+DEP_INCS = \
+     $(COMMON)/EvenTag.h \
+     $(COMMON)/OddTag.h \
+     $(COMMON)/Recorder.h \
+     $(COMMON)/TestCommon.h \
+     ../InitChainTagged.h \
+     ../InitChain.inl
 
-
-INCS = $(COMMON_INCS)
+INCS = \
+     $(COMMON)/CompA.h \
+     $(COMMON)/CompB.h \
+     $(COMMON)/CompC.h \
+     $(COMMON)/CompD.h \
+     $(COMMON)/CompE.h \
+     $(COMP_INCS) \
+     $(DEP_INCS)
 
 TMP_COMMON_SRCS = $(notdir $(COMMON_SRCS))
 COMMON_OBJS = $(patsubst %.cc, %.o, $(TMP_COMMON_SRCS))
+
+TIDY_SRCS_EVEN = \
+     $(COMMON)/CompA.cc \
+     $(COMMON)/CompC.cc \
+     $(COMMON)/CompE.cc \
+     $(COMMON)/Recorder.cc \
+     ./test_main.cc	
+
+TIDY_INCS_EVEN = \
+     $(COMMON)/CompA.h \
+     $(COMMON)/CompC.h \
+     $(COMMON)/CompE.h \
+     $(COMMON)/EvenTag.h \
+     $(COMMON)/Recorder.h \
+     $(COMMON)/TestCommon.h \
+     ../InitChainTagged.h \
+
+TIDY_SRCS_ODD = \
+     $(COMMON)/CompB.cc \
+     $(COMMON)/CompD.cc \
+     $(COMMON)/Recorder.cc \
+     ./test_main.cc	
+
+TIDY_INCS_ODD = \
+     $(COMMON)/CompB.h \
+     $(COMMON)/CompD.h \
+     $(COMMON)/OddTag.h \
+     $(COMMON)/Recorder.h \
+     $(COMMON)/TestCommon.h \
+     ../InitChainTagged.h \
 
 all: test_tagged_init_chain
 
 test_tagged_init_chain: test_main.o $(COMMON_OBJS)
 	$(CXX) -o $@ $(CXXFLAGS) test_main.o $(COMMON_OBJS) $(LIBS)
 
-comp_a.o: $(COMMON)/comp_a.cc $(COMMON)/comp_a.h $(COMMON)/counter.h $(COMMON)/tags.h  ../simple_init_chain.h
-	$(CXX) -c $(CXXFLAGS) -DCHAIN_TAG=Even $<
-
-comp_b.o: $(COMMON)/comp_b.cc $(COMMON)/comp_b.h $(COMMON)/counter.h $(COMMON)/tags.h ../simple_init_chain.h
-	$(CXX) -c $(CXXFLAGS) -DCHAIN_TAG=Odd $<
-
-comp_c.o: $(COMMON)/comp_c.cc $(COMMON)/comp_c.h $(COMMON)/counter.h $(COMMON)/tags.h ../simple_init_chain.h
-	$(CXX) -c $(CXXFLAGS) -DCHAIN_TAG=Even $<
-
-comp_d.o: $(COMMON)/comp_d.cc $(COMMON)/comp_d.h $(COMMON)/counter.h $(COMMON)/tags.h ../simple_init_chain.h
-	$(CXX) -c $(CXXFLAGS) -DCHAIN_TAG=Odd $<
-
-comp_e.o: $(COMMON)/comp_e.cc $(COMMON)/comp_e.h $(COMMON)/counter.h $(COMMON)/tags.h ../simple_init_chain.h
-	$(CXX) -c $(CXXFLAGS) -DCHAIN_TAG=Even $<
-
-test_main.o: test_main.cc $(INCS) ../simple_init_chain.h
+%.o: $(COMMON)/%.cc $(COMMON)/%.h $(DEP_INCS)
 	$(CXX) -c $(CXXFLAGS) $<
 
-counter.o: $(COMMON)/counter.cc $(COMMON)/counter.h ../simple_init_chain.h
+CompA.o: $(COMMON)/CompA.cc $(COMMON)/CompA.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_EVEN $<
+
+CompB.o: $(COMMON)/CompB.cc $(COMMON)/CompB.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_ODD $<
+
+CompC.o: $(COMMON)/CompC.cc $(COMMON)/CompC.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_EVEN $<
+
+CompD.o: $(COMMON)/CompD.cc $(COMMON)/CompD.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_ODD $<
+
+CompE.o: $(COMMON)/CompE.cc $(COMMON)/CompE.h $(DEP_INCS)
+	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_EVEN $<
+
+test_main.o: test_main.cc $(INCS)
 	$(CXX) -c $(CXXFLAGS) $<
 
 format:
-	$(FORMAT) --style=google -i $(SRCS) $(INCS)
+	$(FORMAT) --style=google -i $(SRCS) test_main.cc $(wildcard $(COMMON)/*.h)
 
 tidy:
-	$(TIDY) --fix -extra-arg-before=-xc++ $(SRCS) $(INCS) ../simple_init_chain.h -- $(CXXFLAGS) -DCHAIN_TAG=
+	$(TIDY) --fix -extra-arg-before=-xc++ $(TIDY_SRCS_EVEN) $(TIDY_SRCS_EVEN) -- $(CXXFLAGS) -DUSE_TAG_EVEN -DRUNNING_CPP_TIDY=2
+	$(TIDY) --fix -extra-arg-before=-xc++ $(TIDY_SRCS_ODD) $(TIDY_SRCS_ODD) -- $(CXXFLAGS) -DUSE_TAG_ODD -DRUNNING_CPP_TIDY=2
 
 cpplint:
-	$(CPPLINT) $(SRCS) $(INCS) ../simple_init_chain.h
+	$(CPPLINT) $(SRCS) $(wildcard $(COMMON)/*.h)
 
 clean:
-	rm -rf test_tagged_init_chain *.o *~ *.dSYM
+	rm -rf test_tagged_init_chain *.o *~ *.dSYM $(COMMON)/*~
 
 run-test: test_tagged_init_chain
 	@echo
 	@echo "Main test"
 	./test_tagged_init_chain
 	@echo
+
+print:
+	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_EVEN -DRUNNING_CPP_TIDY=2 ../test_common/CompA.cc
+
 

@@ -19,121 +19,56 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-#include <CompD.h>
-#include <InitChain.h>
+#include <EvenInitChain.h>
+#include <OddInitChain.h>
 #include <Recorder.h>
 #include <getopt.h>
 
 #include <cassert>
 #include <iostream>
 
-static void usage() {
-  std::cout << "usage: test_simple_init_chain [{--exception | --failure}]\n"
-            << "   or  test_simple_init_chain [{ -e | -f }]\n";
-}
+// Permissions, separate for each namespace
+bool even::InitChain::AllowReset() { return true; }
 
-// Static permssions
-bool simple::InitChain::AllowReset() { return true; }
+bool odd::InitChain::AllowReset() { return true; }
 
-// Runner class
-class TestRunner : public simple::InitChain::Runner {
+// Runner classes
+class EvenTestRunner : public even::InitChain::Runner {
  public:
-  TestRunner() : Runner() {}
+  EvenTestRunner() : Runner() {}
 
-  TestRunner(TestRunner const& other) = default;
-  TestRunner(TestRunner&& other) = default;
-  TestRunner& operator=(TestRunner const& other) = default;
-  TestRunner& operator=(TestRunner&& other) = default;
+  EvenTestRunner(EvenTestRunner const& other) = default;
+  EvenTestRunner(EvenTestRunner&& other) = default;
+  EvenTestRunner& operator=(EvenTestRunner const& other) = default;
+  EvenTestRunner& operator=(EvenTestRunner&& other) = default;
 
   bool Run() noexcept { return DoRun(); }
   bool Reset() noexcept { return DoReset(); }
   bool Release() noexcept { return DoRelease(); }
 };
 
-int main(int argc, char** argv) {
-  static struct option long_options[] = {{"exception", no_argument, 0, 1},
-                                         {"failure", no_argument, 0, 2},
-                                         {"help", no_argument, 0, 3},
-                                         {0, 0, 0, 0}};
+class OddTestRunner : public odd::InitChain::Runner {
+ public:
+  OddTestRunner() : Runner() {}
 
-  bool do_failure = false;
-  bool do_exception = false;
+  OddTestRunner(OddTestRunner const& other) = default;
+  OddTestRunner(OddTestRunner&& other) = default;
+  OddTestRunner& operator=(OddTestRunner const& other) = default;
+  OddTestRunner& operator=(OddTestRunner&& other) = default;
 
-  for (;;) {
-    int c = getopt_long(argc, argv, "efh", long_options, 0);
+  bool Run() noexcept { return DoRun(); }
+  bool Reset() noexcept { return DoReset(); }
+  bool Release() noexcept { return DoRelease(); }
+};
 
-    if (c < 0) {
-      break;
-    }
-
-    switch (c) {
-      case 1:
-      case 'e':
-        if (do_failure) {
-          std::cout << "both failure and exception requested\n";
-          usage();
-          return 1;
-        }
-
-        do_exception = true;
-        break;
-
-      case 2:
-      case 'f':
-        if (do_exception) {
-          std::cout << "both failure and exception requested\n";
-          usage();
-          return 1;
-        }
-
-        do_failure = true;
-        break;
-
-      case 3:
-      case 'h':
-        usage();
-        return 0;
-
-      default:
-        usage();
-        return 1;
-    }
-  }
-
-  if (optind != argc) {
+int main(int argc, char**) {
+  if (argc != 1) {
     std::cout << "unexpected parameters\n";
-    usage();
     return 1;
   }
 
-  TestRunner test_runner;
-
-  if (do_exception) {
-    CompD::ArmException();
-
-    auto res = test_runner.Run();
-    assert(res);
-
-    // In UT environment we can rerun failed runs
-    // with failed inits excluded
-    res = test_runner.Run();
-    assert(res);
-
-    return 0;
-  }
-
-  if (do_failure) {
-    CompD::ArmFailure();
-
-    auto res = test_runner.Run();
-    assert(res);
-
-    // In UT environment we can rerun failed runs
-    // with failed inits excluded
-    res = test_runner.Reset();
-    assert(res);
-    return 0;
-  }
+  EvenTestRunner even_test_runner;
+  OddTestRunner odd_test_runner;
 
   assert(Recorder::GetState("a") == 0);
   assert(Recorder::GetState("b") == 0);
@@ -144,7 +79,27 @@ int main(int argc, char** argv) {
   assert(Recorder::GetInitMap().size() == 0);
   assert(Recorder::GetResetMap().size() == 0);
 
-  auto res = test_runner.Run();
+  auto res = even_test_runner.Run();
+  assert(res);
+
+  assert(Recorder::GetState("a") == 1);
+  assert(Recorder::GetState("b") == 0);
+  assert(Recorder::GetState("c") == 1);
+  assert(Recorder::GetState("d") == 0);
+  assert(Recorder::GetState("e") == 2);
+
+  assert(Recorder::GetInitMap().size() == 4);
+  assert(Recorder::GetResetMap().size() == 0);
+
+  // Duplicate calls should be nops
+  //
+  res = even_test_runner.Run();
+  assert(res);
+
+  assert(Recorder::GetInitMap().size() == 4);
+  assert(Recorder::GetResetMap().size() == 0);
+
+  res = odd_test_runner.Run();
   assert(res);
 
   assert(Recorder::GetState("a") == 1);
@@ -156,36 +111,60 @@ int main(int argc, char** argv) {
   assert(Recorder::GetInitMap().size() == 6);
   assert(Recorder::GetResetMap().size() == 0);
 
-  // In UT environment duplicate calls should be nops
+  // Duplicate calls should be nops
   //
-  res = test_runner.Run();
+  res = odd_test_runner.Run();
   assert(res);
 
   assert(Recorder::GetInitMap().size() == 6);
   assert(Recorder::GetResetMap().size() == 0);
 
-  res = test_runner.Reset();
+  res = even_test_runner.Reset();
   assert(res);
 
   assert(Recorder::GetState("a") == 1);  // Empty reset
-  assert(Recorder::GetState("b") == 0);
+  assert(Recorder::GetState("b") == 1);  // Not called
   assert(Recorder::GetState("c") == 1);  // No reset
-  assert(Recorder::GetState("d") == 0);
+  assert(Recorder::GetState("d") == 1);  // Not caled
   // We have two instances of CompE one, deletes
   // self in init function and one in reset
   // We have two inits and one reset at the point
   assert(Recorder::GetState("e") == 1);
 
   assert(Recorder::GetInitMap().size() == 6);
+  assert(Recorder::GetResetMap().size() == 1);
+
+  res = odd_test_runner.Reset();
+  assert(res);
+
+  assert(Recorder::GetState("a") == 1);  // Empty reset
+  assert(Recorder::GetState("b") == 0);  // Reset done
+  assert(Recorder::GetState("c") == 1);  // No reset
+  assert(Recorder::GetState("d") == 0);  // Reset done
+  assert(Recorder::GetState("e") == 1);  // No reset
+
+  assert(Recorder::GetInitMap().size() == 6);
   assert(Recorder::GetResetMap().size() == 3);
 
-  res = test_runner.Run();
+  res = even_test_runner.Run();
   assert(res);
 
   assert(Recorder::GetState("a") == 1);  // No reset, no new inits
-  assert(Recorder::GetState("b") == 1);
+  assert(Recorder::GetState("b") == 0);  // No call
   assert(Recorder::GetState("c") == 1);  // No reset, no new inits
-  assert(Recorder::GetState("d") == 1);
+  assert(Recorder::GetState("d") == 0);  // No call
+  assert(Recorder::GetState("e") == 1);  // Instanced deleted
+
+  assert(Recorder::GetInitMap().size() == 6);
+  assert(Recorder::GetResetMap().size() == 3);
+
+  res = even_test_runner.Run();
+  assert(res);
+
+  assert(Recorder::GetState("a") == 1);  // No reset, no new inits
+  assert(Recorder::GetState("b") == 0);  // No call
+  assert(Recorder::GetState("c") == 1);  // No reset, no new inits
+  assert(Recorder::GetState("d") == 0);  // No call
   assert(Recorder::GetState("e") == 1);
 
   assert(Recorder::GetInitMap().size() == 6);
@@ -198,11 +177,11 @@ int main(int argc, char** argv) {
       if ((*cit).first == -10) {
         assert((*cit).second == 1);
       } else if ((*cit).first == 15) {
-        assert((*cit).second == 2);
+        assert((*cit).second == 1);
       } else if ((*cit).first == 20) {
         assert((*cit).second == 1);
       } else if ((*cit).first == 25) {
-        assert((*cit).second == 2);
+        assert((*cit).second == 1);
       } else if ((*cit).first == 41) {
         assert((*cit).second == 1);
       } else if ((*cit).first == 42) {
@@ -221,6 +200,8 @@ int main(int argc, char** argv) {
         assert((*cit).second == 1);
       } else if ((*cit).first == 25) {
         assert((*cit).second == 1);
+      } else if ((*cit).first == 41) {
+        assert((*cit).second == 0);
       } else if ((*cit).first == 42) {
         assert((*cit).second == 1);
       } else {

@@ -20,24 +20,10 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// NOLINT(build/header_guard)
-//
-#ifndef COUNTER_H_
-#define COUNTER_H_
+#ifndef TEST_COMMON_EVENTAG_H_
+#define TEST_COMMON_EVENTAG_H_
 
-#include <cstddef>
-#include <map>
+// Just define a tag type for tagged tests
+struct Even {};
 
-// Noification from component to count
-// events
-void CountInit(int level);
-void CountReset(int level);
-
-// Map of level -> event-count
-typedef std::map<int, size_t> CountMap;
-
-// Get the map for inspection
-CountMap const& GetInitMap();
-CountMap const& GetResetMap();
-
-#endif  // COUNTER_H_
+#endif  // TEST_COMMON_EVENTAG_H_

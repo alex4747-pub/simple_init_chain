@@ -20,11 +20,44 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// NOLINT(build/header_guard)
-//
-#ifndef COMP_C_H_
-#define COMP_C_H_
+#ifndef TEST_COMMON_TESTCOMMON_H_
+#define TEST_COMMON_TESTCOMMON_H_
 
-bool GetCompCState();
+// We have two ways of providing multiple
+// chains: using namespace and template
+// tags
 
-#endif  // COM_C_H_
+// Namespace customization
+#if defined(USE_NS_EVEN)
+
+#include <EvenInitChain.h>
+#define INIT_CHAIN even::InitChain
+
+#elif defined(USE_NS_ODD)
+
+#include <OddInitChain.h>
+#define INIT_CHAIN odd::InitChain
+
+#else
+
+#if defined(USE_TAG_EVEN)
+
+#include <EvenTag.h>
+#include <InitChainTagged.h>
+#define INIT_CHAIN simple::InitChain<Even>
+
+#elif defined(USE_TAG_ODD)
+
+#include <InitChainTagged.h>
+#include <OddTag.h>
+#define INIT_CHAIN simple::InitChain<Odd>
+
+#else
+
+#include <InitChain.h>
+#define INIT_CHAIN simple::InitChain
+
+#endif  // Tag customization
+#endif  // Namesapce customization
+
+#endif  // TEST_COMMON_TESTCOMMON_H_

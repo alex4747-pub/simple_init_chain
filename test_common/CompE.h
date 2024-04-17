@@ -20,13 +20,34 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// NOLINT(build/header_guard)
-//
-#ifndef TAGS_H_
-#define TAGS_H_
+#ifndef TEST_COMMON_COMPE_H_
+#define TEST_COMMON_COMPE_H_
 
-// Just define tag types for tagged test
-struct Odd {};
-struct Even {};
+// Initialization of multiple instances of CompE class
+// each from its own chain link. Demonstrate delete
+// of one chain link from inside Init function and
+// another one from inside Reset.
 
-#endif  // TAGS_H_
+#include <memory>
+
+class CompE final {
+ public:
+  CompE(int val);
+
+  int GetVal() const { return val_; }
+  bool IsInitDone() const { return init_done_; }
+
+  // If shared library is used call to this function from main
+  // will cause share library to be included into image by linker
+  static bool Check() noexcept;
+
+  // Non-public init helper class
+  class Helper;
+
+ private:
+  int val_;
+  bool init_done_;
+  std::unique_ptr<Helper> helper_;
+};
+
+#endif  // TEST_COMMON_COMPE_H_
