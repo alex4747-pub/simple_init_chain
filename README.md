@@ -21,13 +21,15 @@ it is possible to miss making the "run" operation call.
 from program to program due to the lack of built-in customization
 handles.
 
-All these issues are addressed by this InitChain class:
+All these issues are addressed by this InitChain class(see
+InitChain.inl, InitChain.h and InitChainTagged.h):
 1. It provides two ways of creating multiple chains: using templates
 or putting every chain into a separate namespace.
 2. Repeated "run" operation calls are NOPs because elements are
 unlinked from the chain before the funcion execution takes place.
 There is a top-level "release" operation that prevents all further
-operations. In addition, all access to the top-level level operations
+operations. There is "release-link" operation to perform release on
+any link. In addition, all access to the top-level level operations
 is done through an instance of an accessor/runner class.
 3. There is an optional per-chain-element "reset" function and
 a top-level "reset" operation to support UT. There are several safety
@@ -53,16 +55,22 @@ There are two simple mutexes one protects internal lists, another prevents
 simultaneous execution of the "run", "reset", and "release" operations but
 this is the limit of its intended functionality.
 
-There is some flexibility beyond the basics: UT support, derivation from chain
-element, and a possibility to delete and create chain link elements inside its
-functions.
+There is some flexibility beyond the basics:
+
+1. UT support
+2. Derivation from chain element
+3. Possibility to delete and create chain elements from inside
+both "init" and "reset" function calls.
+4. Possibility to release (and then delete) a chain element at any moment.
+5. Possibility to release all elements and prevent future activites.
 
 ## Operations Overview
 
 The init chain is implemented as the InitChain class. The "run? operation
 is implemented as InitChain::Run(). The "reset" operation is implemented as
 IinitChain::Reset(). The "release" operation is implemented as
- InitChain::Release()
+InitChain::Release(). The "release-link" operation is implemented
+InitChain::Release(InitChain::Link*)
 .
 The chain element/chain link is implemented as InitChain::Link class,
 both the "init" function and the "reset" function are supplied at
@@ -83,7 +91,10 @@ and optionally inserts the chain element into the init list. Repeated "reset"
 operation calls are NOPs.
 
 The "release" operation clears all lists and prevents new links from being
-added by dlopen operations.
+added by dlopen operations, after that all elements could be safely
+deleted,
+
+The "release-link" releases a single chain element.
 
 There are several ways to control allowed operations both at the chain
 and link levels and both at run- and compile- times. There is a per-chain

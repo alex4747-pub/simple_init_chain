@@ -79,7 +79,9 @@ bool CompD::Helper::Init() {
     std::cout << "Component-d: init function called: level=" << init_level_
               << " will fail" << std::endl;
     failure_armed_ = false;
-    return false;
+    // Still return true to allow re-run
+    // in test environment
+    return true;
   }
 
   if (exception_armed_) {

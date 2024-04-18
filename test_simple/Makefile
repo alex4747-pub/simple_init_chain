@@ -85,4 +85,12 @@ run-test: test_simple_init_chain
 	@echo "Failure test"
 	./test_simple_init_chain -f
 	@echo
+	@echo
+	@echo "Link release test"
+	./test_simple_init_chain -l
+	@echo
+	@echo
+	@echo "Release test"
+	./test_simple_init_chain -r
+	@echo
 

@@ -41,6 +41,8 @@ class CompA {
   // will cause share library to be included into image by linker
   static bool Check() noexcept;
 
+  static INIT_CHAIN::Link& GetLink() { return init_helper_; }
+
  private:
   CompA() noexcept;
   ~CompA();

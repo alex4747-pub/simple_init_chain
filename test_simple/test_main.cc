@@ -19,6 +19,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+#include <CompA.h>
 #include <CompD.h>
 #include <InitChain.h>
 #include <Recorder.h>
@@ -28,8 +29,12 @@
 #include <iostream>
 
 static void usage() {
-  std::cout << "usage: test_simple_init_chain [{--exception | --failure}]\n"
-            << "   or  test_simple_init_chain [{ -e | -f }]\n";
+  std::cout << "usage: test_simple_init_chain [option]\n";
+  std::cout << "where option could be:\n";
+  std::cout << " -f,--failure        simulate operation failure\n";
+  std::cout << " -e,--exception      throw exception from operation\n";
+  std::cout << " -r,--release        do release\n";
+  std::cout << " -l,--link-release   do release link\n";
 }
 
 // Static permssions
@@ -48,19 +53,24 @@ class TestRunner : public simple::InitChain::Runner {
   bool Run() noexcept { return DoRun(); }
   bool Reset() noexcept { return DoReset(); }
   bool Release() noexcept { return DoRelease(); }
+  bool Release(simple::InitChain::Link* link) noexcept {
+    return DoRelease(link);
+  }
 };
 
 int main(int argc, char** argv) {
-  static struct option long_options[] = {{"exception", no_argument, 0, 1},
-                                         {"failure", no_argument, 0, 2},
-                                         {"help", no_argument, 0, 3},
-                                         {0, 0, 0, 0}};
+  static struct option long_options[] = {
+      {"exception", no_argument, 0, 1}, {"failure", no_argument, 0, 2},
+      {"help", no_argument, 0, 3},      {"link-release", no_argument, 0, 4},
+      {"release", no_argument, 0, 5},   {0, 0, 0, 0}};
 
   bool do_failure = false;
   bool do_exception = false;
+  bool do_link_release = false;
+  bool do_release = false;
 
   for (;;) {
-    int c = getopt_long(argc, argv, "efh", long_options, 0);
+    int c = getopt_long(argc, argv, "efhlr", long_options, 0);
 
     if (c < 0) {
       break;
@@ -94,6 +104,26 @@ int main(int argc, char** argv) {
         usage();
         return 0;
 
+      case 4:
+      case 'l':
+        if (do_release) {
+          std::cout << "both link-release and release requested\n";
+          usage();
+          return 1;
+        }
+        do_link_release = true;
+        break;
+
+      case 5:
+      case 'r':
+        if (do_link_release) {
+          std::cout << "both link-release and release requested\n";
+          usage();
+          return 1;
+        }
+        do_release = true;
+        break;
+
       default:
         usage();
         return 1;
@@ -108,33 +138,6 @@ int main(int argc, char** argv) {
 
   TestRunner test_runner;
 
-  if (do_exception) {
-    CompD::ArmException();
-
-    auto res = test_runner.Run();
-    assert(res);
-
-    // In UT environment we can rerun failed runs
-    // with failed inits excluded
-    res = test_runner.Run();
-    assert(res);
-
-    return 0;
-  }
-
-  if (do_failure) {
-    CompD::ArmFailure();
-
-    auto res = test_runner.Run();
-    assert(res);
-
-    // In UT environment we can rerun failed runs
-    // with failed inits excluded
-    res = test_runner.Reset();
-    assert(res);
-    return 0;
-  }
-
   assert(Recorder::GetState("a") == 0);
   assert(Recorder::GetState("b") == 0);
   assert(Recorder::GetState("c") == 0);
@@ -143,6 +146,118 @@ int main(int argc, char** argv) {
 
   assert(Recorder::GetInitMap().size() == 0);
   assert(Recorder::GetResetMap().size() == 0);
+
+  if (do_exception) {
+    CompD::ArmException();
+
+    auto res = test_runner.Run();
+    assert(res);
+
+    assert(Recorder::GetState("a") == 1);
+    assert(Recorder::GetState("b") == 1);
+    assert(Recorder::GetState("c") == 1);
+    assert(Recorder::GetState("d") == 0);  // Exception
+    assert(Recorder::GetState("e") == 2);
+
+    // In UT environment we can re-run excepted entries
+    res = test_runner.Reset();
+    assert(res);
+
+    assert(Recorder::GetState("a") == 1);  // No reset
+    assert(Recorder::GetState("b") == 0);
+    assert(Recorder::GetState("c") == 1);  // No reset
+    assert(Recorder::GetState("d") == 0);  // Exception
+    assert(Recorder::GetState("e") == 1);  // Two inits one reset
+
+    res = test_runner.Run();
+    assert(res);
+
+    assert(Recorder::GetState("a") == 1);  // No reset, no additional init
+    assert(Recorder::GetState("b") == 1);
+    assert(Recorder::GetState("c") == 1);  // No reset no additonal init
+    assert(Recorder::GetState("d") == 1);  // Retried after exception
+    assert(Recorder::GetState("e") ==
+           1);  // No more inits, both links deleted self
+
+    assert(Recorder::GetInitMap().size() == 6);
+    assert(Recorder::GetResetMap().size() == 3);
+    return 0;
+  }
+
+  if (do_failure) {
+    CompD::ArmFailure();
+    auto res = test_runner.Run();
+    assert(res);
+
+    assert(Recorder::GetState("a") == 1);
+    assert(Recorder::GetState("b") == 1);
+    assert(Recorder::GetState("c") == 1);
+    assert(Recorder::GetState("d") == 0);  // Failed
+    assert(Recorder::GetState("e") == 2);
+
+    // In UT environment we can re-run failed entries
+    res = test_runner.Reset();
+    assert(res);
+
+    assert(Recorder::GetState("a") == 1);  // No reset
+    assert(Recorder::GetState("b") == 0);
+    assert(Recorder::GetState("c") == 1);  // No reset
+    assert(Recorder::GetState("d") == 0);  // Failed
+    assert(Recorder::GetState("e") == 1);  // Two inits one reset
+
+    res = test_runner.Run();
+    assert(res);
+
+    assert(Recorder::GetState("a") == 1);  // No reset no additional init
+    assert(Recorder::GetState("b") == 1);
+    assert(Recorder::GetState("c") == 1);  // No reset no additional init
+    assert(Recorder::GetState("d") == 1);  // Retried after exception
+    assert(Recorder::GetState("e") ==
+           1);  // No more inits, both links deleted self
+
+    assert(Recorder::GetInitMap().size() == 6);
+    assert(Recorder::GetResetMap().size() == 3);
+
+    return 0;
+  }
+
+  if (do_link_release) {
+    auto& link = CompA::GetLink();
+    auto res = test_runner.Release(&link);
+    assert(res);
+
+    res = test_runner.Run();
+    assert(res);
+
+    assert(Recorder::GetState("a") == 0);  // Should be released
+    assert(Recorder::GetState("b") == 1);
+    assert(Recorder::GetState("c") == 1);
+    assert(Recorder::GetState("d") == 1);
+    assert(Recorder::GetState("e") == 2);
+
+    assert(Recorder::GetInitMap().size() == 5);
+    assert(Recorder::GetResetMap().size() == 0);
+
+    return 0;
+  }
+
+  if (do_release) {
+    auto res = test_runner.Release();
+    assert(res);
+
+    res = test_runner.Run();
+    assert(res);
+
+    assert(Recorder::GetState("a") == 0);
+    assert(Recorder::GetState("b") == 0);
+    assert(Recorder::GetState("c") == 0);
+    assert(Recorder::GetState("d") == 0);
+    assert(Recorder::GetState("e") == 0);
+
+    assert(Recorder::GetInitMap().size() == 0);
+    assert(Recorder::GetResetMap().size() == 0);
+    return 0;
+  }
 
   auto res = test_runner.Run();
   assert(res);
@@ -156,7 +271,7 @@ int main(int argc, char** argv) {
   assert(Recorder::GetInitMap().size() == 6);
   assert(Recorder::GetResetMap().size() == 0);
 
-  // In UT environment duplicate calls should be nops
+  // Duplicate calls are nops
   //
   res = test_runner.Run();
   assert(res);
