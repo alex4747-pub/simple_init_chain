@@ -285,8 +285,8 @@ class InitChain {
 
       std::lock_guard<std::mutex> guard(bucket->link_mutex_);
 
-      if (!res || !bucket->reset_ok_ || !bucket->active_link_) {
-        // Init function returned false, or resets are not allowed,
+      if (!cur->reset_func_ || !res || !bucket->reset_ok_ || !bucket->active_link_) {
+        // No reset function, init function returned false, or resets are not allowed,
         // or active entry was deleted inside the init call: nothing to do
         //
         bucket->active_link_ = nullptr;  // For consistency sake
