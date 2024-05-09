@@ -25,9 +25,9 @@ clean:
 # It will format the test-common 4 times
 # but it is acceptable
 format:
-	$(FORMAT) --style=google -i ./InitChain.h
-	$(FORMAT) --style=google -i ./InitChainTagged.h
-	$(FORMAT) --style=google -i ./InitChain.inl
+	$(FORMAT) --style=google -i ./init_chain.h
+	$(FORMAT) --style=google -i ./init_chain_tagged.h
+	$(FORMAT) --style=google -i ./init_chain.inc
 	cd test_namespace; $(MAKE) format
 	cd test_shared; $(MAKE) format
 	cd test_simple; $(MAKE) format
@@ -36,7 +36,7 @@ format:
 # It will tidy the test-common 4 times
 # but it is acceptable
 tidy:
-	$(TIDY) --fix -extra-arg-before=-xc++ ./InitChain.h -- $(STD) -DRUNNING_CPP_TIDY=1
+	$(TIDY) --fix -extra-arg-before=-xc++ ./init_chain.h -- $(STD) -DRUNNING_CPP_TIDY=1
 	cd test_namespace; $(MAKE) tidy
 	cd test_shared; $(MAKE) tidy
 	cd test_simple; $(MAKE) tidy
@@ -48,9 +48,9 @@ tidy:
 # It will lint the test-common 4 times
 # but it is acceptable
 cpplint:
-	$(CPPLINT) ./InitChain.h
-	$(CPPLINT) ./InitChainTagged.h
-	$(CPPLINT) ./InitChain.inl
+	$(CPPLINT) ./init_chain.h
+	$(CPPLINT) ./init_chain_tagged.h
+	$(CPPLINT) ./init_chain.inc
 	cd test_namespace; $(MAKE) cpplint
 	cd test_shared; $(MAKE) cpplint
 	cd test_simple; $(MAKE) cpplint

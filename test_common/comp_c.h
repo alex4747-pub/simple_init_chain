@@ -20,48 +20,51 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_COMPD_H_
-#define TEST_COMMON_COMPD_H_
+#ifndef TEST_COMMON_COMP_C_H_
+#define TEST_COMMON_COMP_C_H_
 
-// D-component is a special case we can arm failures
-// or exception.
+// This example demonstrates several more variants:
 //
-// We use static member of class it is preferred way
-// preventing multiple chain links to be initializing
-// the same class
+// 1. We derive from the ChainLink and use it as a
+//    static member: in examples a and b we used base
+//    ChainLink
+//
+// 2. The derived class is forward declared and non-public,
+//    we do not need neither forward declaration of the
+//    ChainLink nor include of the ChainLink.h
+//
+// 3. We pass member functions of the derived class
+//    to the base ChainLink: in examples a and be we
+//    passed static functons
+//
+// 4. We also demostrate inclusion of Reset functionality
+//    by compile time #define
 
-// The application is a singleton
-class CompD {
+class CompC {
  public:
-  CompD& GetInstance() noexcept;
+  CompC& GetInstance() noexcept;
 
   // Just an example of unrelated function
   int GetCounter() noexcept;
 
-  // Component D does not have Check function
-  // it will be explicitly loaded by dlopen.
-
-  static void ArmFailure() noexcept;
-  static void ArmException() noexcept;
+  // If shared library is used call to this function from main
+  // will cause share library to be included into image by linker
+  static bool Check() noexcept;
 
  private:
-  CompD() noexcept;
-  ~CompD();
+  CompC() noexcept;
+  ~CompC();
 
   int counter_;
 
-  static CompD* self_;
-  static bool failure_armed_;
-  static bool exception_armed_;
+  static CompC* self_;
 
   // We use levels for logging so it is a member of the class
   static int const init_level_;
 
-  // Initialization helper class
-  class Helper;
+  class InitHelper;
 
-  // Static instance of helper class
-  static Helper helper_;
+  static InitHelper init_helper_;
 };
 
-#endif  // TEST_COMMON_COMPD_H_
+#endif  // TEST_COMMON_COMP_C_H_

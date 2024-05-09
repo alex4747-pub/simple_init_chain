@@ -20,34 +20,40 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_COMPE_H_
-#define TEST_COMMON_COMPE_H_
+// This is the test component a.
+//
+#include <comp_a.h>
+#include <recorder.h>
 
-// Initialization of multiple instances of CompE class
-// each from its own chain link. Demonstrate delete
-// of one chain link from inside Init function and
-// another one from inside Reset.
+#include <cassert>
+#include <iostream>
+#include <string>
 
-#include <memory>
+CompA* CompA::self_;
 
-class CompE final {
- public:
-  CompE(int val);
+// Also, we are exercising usage of negative levels.
+int const CompA::init_level_ = -10;
 
-  int GetVal() const { return val_; }
-  bool IsInitDone() const { return init_done_; }
+CompA& CompA::GetInstance() noexcept { return *self_; }
 
-  // If shared library is used call to this function from main
-  // will cause share library to be included into image by linker
-  static bool Check() noexcept;
+int CompA::GetCounter() noexcept { return counter_++; }
 
-  // Non-public init helper class
-  class Helper;
+bool CompA::Check() noexcept { return true; }
 
- private:
-  int val_;
-  bool init_done_;
-  std::unique_ptr<Helper> helper_;
-};
+CompA::CompA() noexcept : counter_() {}
+CompA::~CompA() { self_ = nullptr; }
 
-#endif  // TEST_COMMON_COMPE_H_
+bool CompA::Init() {
+  std::cout << "Component-a: init function called: level=" << init_level_
+            << std::endl;
+  Recorder::SetState("a", true);
+  Recorder::CountInit(init_level_);
+
+  // There is no reset-func so return value does not matter
+  // there will be no further actions
+  return true;
+}
+
+// Static instance of init_helper
+//
+INIT_CHAIN::Link CompA::init_helper_(init_level_, Init);

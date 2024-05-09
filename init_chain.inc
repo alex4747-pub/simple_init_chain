@@ -72,23 +72,23 @@ class InitChain {
           reset_func_(reset_func) {
       if (!init_func_) abort();
       Bucket* bucket = GetBucket();
-      std::lock_guard<std::mutex> guard(bucket->link_mutex_);
-      if (bucket->link_lock_) {
+      std::lock_guard<std::mutex> guard(bucket->link_mutex);
+      if (bucket->link_lock) {
         return;
       }
-      Insert(this, &bucket->init_list_, true);
+      Insert(this, &bucket->init_list, true);
     }
 
     virtual ~Link() {
       Bucket* bucket = GetBucket();
-      std::lock_guard<std::mutex> guard(bucket->link_mutex_);
+      std::lock_guard<std::mutex> guard(bucket->link_mutex);
 
-      if (this == bucket->active_link_) {
+      if (this == bucket->active_link) {
         // Being deleted while being processed
-        bucket->active_link_ = nullptr;
+        bucket->active_link = nullptr;
       }
 
-      Remove(this, &bucket->init_list_, &bucket->reset_list_);
+      Remove(this, &bucket->init_list, &bucket->reset_list);
     }
 
     Link& operator=(Link const& other) = delete;
@@ -207,7 +207,7 @@ class InitChain {
     return;
   }
 
-  static void Remove(Link* link, Link** init_list_ptr, Link** reset_list_ptr) {
+  static void Remove(Link* link, Link** init_listptr, Link** reset_listptr) {
     if (!link->in_list_) {
       return;
     }
@@ -218,10 +218,10 @@ class InitChain {
 
     if (link->prev_) {
       link->prev_->next_ = link->next_;
-    } else if (link == *init_list_ptr) {
-      *init_list_ptr = link->next_;
-    } else if (link == *reset_list_ptr) {
-      *reset_list_ptr = link->next_;
+    } else if (link == *init_listptr) {
+      *init_listptr = link->next_;
+    } else if (link == *reset_listptr) {
+      *reset_listptr = link->next_;
     } else {
       abort();
     }
@@ -246,25 +246,24 @@ class InitChain {
 
   static bool Run() noexcept {
     Bucket* bucket = GetBucket();
-    std::unique_lock<std::mutex> run_guard(bucket->run_mutex_,
-                                           std::try_to_lock);
+    std::unique_lock<std::mutex> run_guard(bucket->run_mutex, std::try_to_lock);
 
     if (!run_guard.owns_lock()) {
       return false;
     }
 
     // Read config on the first init
-    if (!bucket->activated_) {
-      bucket->activated_ = true;
-      bucket->reset_ok_ = AllowReset();
+    if (!bucket->activated) {
+      bucket->activated = true;
+      bucket->reset_ok = AllowReset();
     }
 
     for (;;) {
       Link* cur = nullptr;
       {
-        std::lock_guard<std::mutex> guard(bucket->link_mutex_);
-        cur = Pop(&bucket->init_list_);
-        bucket->active_link_ = cur;
+        std::lock_guard<std::mutex> guard(bucket->link_mutex);
+        cur = Pop(&bucket->init_list);
+        bucket->active_link = cur;
       }
 
       if (!cur) {
@@ -283,17 +282,19 @@ class InitChain {
         }
       }
 
-      std::lock_guard<std::mutex> guard(bucket->link_mutex_);
+      std::lock_guard<std::mutex> guard(bucket->link_mutex);
 
-      if (!cur->reset_func_ || !res || !bucket->reset_ok_ || !bucket->active_link_) {
-        // No reset function, init function returned false, or resets are not allowed,
-        // or active entry was deleted inside the init call: nothing to do
+      if (!cur->reset_func_ || !res || !bucket->reset_ok ||
+          !bucket->active_link) {
+        // No reset function, init function returned false, or resets are not
+        // allowed, or active entry was deleted inside the init call: nothing to
+        // do
         //
-        bucket->active_link_ = nullptr;  // For consistency sake
+        bucket->active_link = nullptr;  // For consistency sake
         continue;
       }
 
-      bucket->active_link_ = nullptr;  // For consistency sake
+      bucket->active_link = nullptr;  // For consistency sake
 
       if (!cur->reset_func_) {
         // No reset function provided
@@ -302,7 +303,7 @@ class InitChain {
 
       // Insert processed entry into reset list, in most
       // cases there wil be no list walk involved
-      Insert(cur, &bucket->reset_list_, false);
+      Insert(cur, &bucket->reset_list, false);
     }
 
     return true;
@@ -322,19 +323,18 @@ class InitChain {
   static bool Reset() noexcept {
     Bucket* bucket = GetBucket();
 
-    std::unique_lock<std::mutex> run_guard(bucket->run_mutex_,
-                                           std::try_to_lock);
+    std::unique_lock<std::mutex> run_guard(bucket->run_mutex, std::try_to_lock);
 
     if (!run_guard.owns_lock()) {
       return false;
     }
 
-    if (!bucket->activated_) {
+    if (!bucket->activated) {
       // Nothing to do yet, consider it success
       return true;
     }
 
-    if (!bucket->reset_ok_) {
+    if (!bucket->reset_ok) {
       // Resets are not enabled consider
       // it success
       return true;
@@ -343,9 +343,9 @@ class InitChain {
     for (;;) {
       Link* cur = nullptr;
       {
-        std::lock_guard<std::mutex> guard(bucket->link_mutex_);
-        cur = Pop(&bucket->reset_list_);
-        bucket->active_link_ = cur;
+        std::lock_guard<std::mutex> guard(bucket->link_mutex);
+        cur = Pop(&bucket->reset_list);
+        bucket->active_link = cur;
       }
 
       if (!cur) {
@@ -360,21 +360,21 @@ class InitChain {
         }
       }
 
-      std::lock_guard<std::mutex> guard(bucket->link_mutex_);
-      if (!res || !bucket->active_link_) {
+      std::lock_guard<std::mutex> guard(bucket->link_mutex);
+      if (!res || !bucket->active_link) {
         // There is no reset function, or it returned false,
         // or excepted, or the active entry was deleted inside
         // the reset call: nothing to do
         //
-        bucket->active_link_ = nullptr;  // For consistency sake
+        bucket->active_link = nullptr;  // For consistency sake
         continue;
       }
 
-      bucket->active_link_ = nullptr;  // For consistency sake
+      bucket->active_link = nullptr;  // For consistency sake
 
       // Insert processed entry into init list, in most
       // cases there wil be no list walk involved
-      Insert(cur, &bucket->init_list_, true);
+      Insert(cur, &bucket->init_list, true);
     }
 
     return true;
@@ -387,32 +387,17 @@ class InitChain {
   static bool Release() noexcept {
     Bucket* bucket = GetBucket();
 
-    std::unique_lock<std::mutex> run_guard(bucket->run_mutex_,
-                                           std::try_to_lock);
+    std::unique_lock<std::mutex> run_guard(bucket->run_mutex, std::try_to_lock);
 
     if (!run_guard.owns_lock()) {
       return false;
     }
 
-    std::lock_guard<std::mutex> guard(bucket->link_mutex_);
+    std::lock_guard<std::mutex> guard(bucket->link_mutex);
 
-    bucket->link_lock_ = true;
+    bucket->link_lock = true;
 
-    Link* cur = bucket->init_list_;
-
-    while (cur) {
-      Link* next = cur->next_;
-
-      cur->prev_ = nullptr;
-      cur->next_ = nullptr;
-      cur->in_list_ = false;
-
-      cur = next;
-    }
-
-    bucket->init_list_ = nullptr;
-
-    cur = bucket->reset_list_;
+    Link* cur = bucket->init_list;
 
     while (cur) {
       Link* next = cur->next_;
@@ -424,7 +409,21 @@ class InitChain {
       cur = next;
     }
 
-    bucket->reset_list_ = nullptr;
+    bucket->init_list = nullptr;
+
+    cur = bucket->reset_list;
+
+    while (cur) {
+      Link* next = cur->next_;
+
+      cur->prev_ = nullptr;
+      cur->next_ = nullptr;
+      cur->in_list_ = false;
+
+      cur = next;
+    }
+
+    bucket->reset_list = nullptr;
     return true;
   }
 
@@ -439,20 +438,19 @@ class InitChain {
 
     Bucket* bucket = GetBucket();
 
-    std::unique_lock<std::mutex> run_guard(bucket->run_mutex_,
-                                           std::try_to_lock);
+    std::unique_lock<std::mutex> run_guard(bucket->run_mutex, std::try_to_lock);
 
     if (!run_guard.owns_lock()) {
       return false;
     }
 
-    std::lock_guard<std::mutex> guard(bucket->link_mutex_);
+    std::lock_guard<std::mutex> guard(bucket->link_mutex);
 
     if (!link->in_list_) {
       return true;
     }
 
-    Remove(link, &bucket->init_list_, &bucket->reset_list_);
+    Remove(link, &bucket->init_list, &bucket->reset_list);
     return true;
   }
 
@@ -461,35 +459,35 @@ class InitChain {
   struct Bucket {
     // Run mutex provides mutual exclusion between Runs(), Reset(),
     // and Release(), also protects activate field
-    RUN_MUTEX run_mutex_;
+    RUN_MUTEX run_mutex;
 
     // Set true on the first Run(), used to read
     // config
-    bool activated_;
+    bool activated;
 
     // Configuration
-    bool reset_ok_;
+    bool reset_ok;
 
     // Link mutex protects access to link data
-    LINK_MUTEX link_mutex_;
+    LINK_MUTEX link_mutex;
 
     // Link currently in process
-    Link* active_link_;
+    Link* active_link;
 
     // Init list
-    Link* init_list_;
+    Link* init_list;
 
     // Reset list
-    Link* reset_list_;
+    Link* reset_list;
 
     // Constructors would not link self into init list
-    bool link_lock_;
+    bool link_lock;
   };
 
   // Static operaton primitives
   static Bucket* GetBucket() noexcept {
-    static Bucket chain_bucket_;
-    return &chain_bucket_;
+    static Bucket chain_bucket;
+    return &chain_bucket;
   }
 
   // Used by tagged version to force explicit

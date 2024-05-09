@@ -23,9 +23,9 @@
 // This is the test component e
 //
 
-#include <CompE.h>
-#include <Recorder.h>
-#include <TestCommon.h>
+#include <comp_e.h>
+#include <recorder.h>
+#include <test_common.h>
 
 #include <cassert>
 #include <exception>

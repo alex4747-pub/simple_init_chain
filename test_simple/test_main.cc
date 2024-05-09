@@ -19,11 +19,11 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-#include <CompA.h>
-#include <CompD.h>
-#include <InitChain.h>
-#include <Recorder.h>
+#include <comp_a.h>
+#include <comp_d.h>
 #include <getopt.h>
+#include <init_chain.h>
+#include <recorder.h>
 
 #include <cassert>
 #include <iostream>

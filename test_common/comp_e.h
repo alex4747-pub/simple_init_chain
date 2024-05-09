@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)Run
+// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -20,36 +20,34 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef INITCHAIN_H_
-#define INITCHAIN_H_
+#ifndef TEST_COMMON_COMP_E_H_
+#define TEST_COMMON_COMP_E_H_
 
-#include <functional>
-#include <mutex>  // NOLINT we need the standard mutex
+// Initialization of multiple instances of CompE class
+// each from its own chain link. Demonstrate delete
+// of one chain link from inside Init function and
+// another one from inside Reset.
 
-#if __cplusplus < 201103L
-#error "At least c++11 is required"
-#endif
+#include <memory>
 
-// This the default version. It places init chain code
-// into the 'simple' namespace.
-//
-// Users can add additional independent chains by placing them
-// into namespaces of their choice
-//
-// See README.md and comments in InitChain.inl for
-// detais
-//
+class CompE final {
+ public:
+  CompE(int val);
 
-namespace simple {
+  int GetVal() const { return val_; }
+  bool IsInitDone() const { return init_done_; }
 
-// We have to provide typdefs for mutexes Note: these typedefs
-// are completely encapsulated inside the InitChain class
+  // If shared library is used call to this function from main
+  // will cause share library to be included into image by linker
+  static bool Check() noexcept;
 
-#define RUN_MUTEX_TYPEDEF using RUN_MUTEX = std::mutex;
-#define LINK_MUTEX_TYPEDEF using LINK_MUTEX = std::mutex;
+  // Non-public init helper class
+  class Helper;
 
-#include "InitChain.inl"
+ private:
+  int val_;
+  bool init_done_;
+  std::unique_ptr<Helper> helper_;
+};
 
-}  // namespace simple
-
-#endif  // INITCHAIN_H_
+#endif  // TEST_COMMON_COMP_E_H_

@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)
+// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)Run
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -20,40 +20,35 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-// This is the test component a.
-//
-#include <CompA.h>
-#include <Recorder.h>
+#ifndef TEST_COMMON_EVEN_INIT_CHAIN_H_
+#define TEST_COMMON_EVEN_INIT_CHAIN_H_
 
 #include <cassert>
+#include <cstddef>
+#include <functional>
 #include <iostream>
-#include <string>
+#include <mutex>  // NOLINT we need the standard mutex
 
-CompA* CompA::self_;
+#if __cplusplus < 201103L
+#error "At least c++11 is required"
+#endif
 
-// Also, we are exercising usage of negative levels.
-int const CompA::init_level_ = -10;
-
-CompA& CompA::GetInstance() noexcept { return *self_; }
-
-int CompA::GetCounter() noexcept { return counter_++; }
-
-bool CompA::Check() noexcept { return true; }
-
-CompA::CompA() noexcept : counter_() {}
-CompA::~CompA() { self_ = nullptr; }
-
-bool CompA::Init() {
-  std::cout << "Component-a: init function called: level=" << init_level_
-            << std::endl;
-  Recorder::SetState("a", true);
-  Recorder::CountInit(init_level_);
-
-  // There is no reset-func so return value does not matter
-  // there will be no further actions
-  return true;
-}
-
-// Static instance of init_helper
+// This the default version. It places init chain code
+// into the 'simple' namespace.
 //
-INIT_CHAIN::Link CompA::init_helper_(init_level_, Init);
+// Users can add additional independent chains by placing them
+// into namespaces of their choice
+//
+// See README.md and comments in init_chain.inc for details
+//
+
+namespace even {
+
+#define RUN_MUTEX_TYPEDEF using RUN_MUTEX = std::mutex;
+#define LINK_MUTEX_TYPEDEF using LINK_MUTEX = std::mutex;
+
+#include "init_chain.inc"
+
+}  // namespace even
+
+#endif  // TEST_COMMON_EVEN_INIT_CHAIN_H_

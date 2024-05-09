@@ -23,8 +23,8 @@
 // This is the test component b
 //
 
-#include <CompB.h>
-#include <Recorder.h>
+#include <comp_b.h>
+#include <recorder.h>
 
 #include <cassert>
 #include <iostream>

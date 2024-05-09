@@ -20,42 +20,10 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_COMPB_H_
-#define TEST_COMMON_COMPB_H_
+#ifndef TEST_COMMON_EVEN_TAG_H_
+#define TEST_COMMON_EVEN_TAG_H_
 
-#include <TestCommon.h>
+// Just define a tag type for tagged tests
+struct Even {};
 
-// A simple form of initialization: the chain-link object
-// is a static member of the class.
-//
-
-// Application is a singleton
-class CompB {
- public:
-  CompB& GetInstance() noexcept;
-
-  // Just an example of unrelated function
-  int GetCounter() noexcept;
-
-  // If shared library is used call to this function from main
-  // will cause share library to be included into image by linker
-  static bool Check() noexcept;
-
- private:
-  CompB() noexcept;
-  ~CompB();
-
-  static bool Init();
-  static bool Reset();
-
-  int counter_;
-
-  static CompB* self_;
-
-  // We use levels for logging so it is a member of the class
-  static int const init_level_;
-
-  static INIT_CHAIN::Link init_helper_;
-};
-
-#endif  // TEST_COMMON_COMPB_H_
+#endif  // TEST_COMMON_EVEN_TAG_H_

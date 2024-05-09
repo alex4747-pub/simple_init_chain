@@ -23,9 +23,9 @@
 // This is the test component d
 //
 
-#include <CompD.h>
-#include <Recorder.h>
-#include <TestCommon.h>
+#include <comp_d.h>
+#include <recorder.h>
+#include <test_common.h>
 
 #include <cassert>
 #include <exception>

@@ -19,14 +19,14 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-#include <CompA.h>
-#include <CompB.h>
-#include <CompC.h>
-#include <CompE.h>
-#include <Recorder.h>
-#include <TestCommon.h>
+#include <comp_a.h>
+#include <comp_b.h>
+#include <comp_c.h>
+#include <comp_e.h>
 #include <dlfcn.h>
 #include <getopt.h>
+#include <recorder.h>
+#include <test_common.h>
 
 #include <cassert>
 #include <iostream>
@@ -85,7 +85,7 @@ int main(int argc, char**) {
   assert(Recorder::GetResetMap().size() == 0);
 
   // Load component D using dlopen and run init
-  void* dla_handle = dlopen("lib_comp_D.so", RTLD_NOW);
+  void* dla_handle = dlopen("lib_comp_d.so", RTLD_NOW);
   assert(dla_handle);
   test_runner.Run();
 

@@ -22,7 +22,7 @@ from program to program due to the lack of built-in customization
 handles.
 
 All these issues are addressed by this InitChain class(see
-InitChain.inl, InitChain.h and InitChainTagged.h):
+init_chain.inc, init_chain.h and init_chain_tagged.h):
 1. It provides two ways of creating multiple chains: using templates
 or putting every chain into a separate namespace.
 2. Repeated "run" operation calls are NOPs because elements are
@@ -118,24 +118,24 @@ analysis through additional visibility of the calling points.
 
 | File | Description |
 |------|-------------|
-|InitChain.inl | The core of the implementation.|
-|InitChain.h | A basic init chain placed in the "simple" namespace.|
-|InitChainTagged.h | Templated implementation.|
+|init_chain.inc | The core of the implementation.|
+|init_chain.h | A basic init chain placed in the "simple" namespace.|
+|init_chain_tagged.h | Templated implementation.|
 |test_common | Managed component examples used by tests.|
 |test_namespace | An example with two chains one placed in the "even" and another in the "odd" namespaces.|
 |test_shared | An example using components provided as shared libraries.|
 |test_simple | A simple example using static linking, also tests exceptions and failures. handling.|
 |test_tagges | An example with two chains one tagged with the EvenTag and another with the OddTag.|
-|test_common/CompA | The chain link is a standalone static object, no "reset" function, demonstrating that the "init" function return value does not matter in this case.|
-|test_common/CompB | A singleton example, the chain link object is a static member of the singleton, the singleton is created by the  "init" function and deleted by the "reset" function.|
-|test_common/CompC | Another singleton example. Demonstrates derivation from InitChain::Link, passing a class member function as "init"/"reset" functions into the constructor.|
-|test_common/CompD | Another singleton demonstrates failure and exception handling.|
-|test_common/CompE | An example of derivation from InitChain::Link the derived chain links aree dynamic members of the owning class, demonstrates deletion of the chain link from inside "init"/"reset" functions.|
-|Test_common/Recorder | A test utility to records events.|
-|test_common/EvenInitChain.h | Basic init chain placed into the "even" namespace|
-|test_common/OddInitChain.h | Basic init chain placed into the "odd" namespace|
-|test_common/EvenTag | class EvenTag|
-|test_common/OddTag | class OddTag|
+|test_common/comp_a.* | The chain link is a standalone static object, no "reset" function, demonstrating that the "init" function return value does not matter in this case.|
+|test_common/comp_b.* | A singleton example, the chain link object is a static member of the singleton, the singleton is created by the  "init" function and deleted by the "reset" function.|
+|test_common/comp_c.*| Another singleton example. Demonstrates derivation from InitChain::Link, passing a class member function as "init"/"reset" functions into the constructor.|
+|test_common/comp_d.* | Another singleton demonstrates failure and exception handling.|
+|test_common/comp_e.* | An example of derivation from InitChain::Link the derived chain links aree dynamic members of the owning class, demonstrates deletion of the chain link from inside "init"/"reset" functions.|
+|Test_common/recorder.h | A test utility to records events.|
+|test_common/even_init_chain.h | Basic init chain placed into the "even" namespace|
+|test_common/odd_init_chain.h | Basic init chain placed into the "odd" namespace|
+|test_common/even_tag.h | class EvenTag|
+|test_common/odd_tag.h | class OddTag|
 
 ## Suggested Use of Level Values
 There is nothing wrong to select 100 - 9999

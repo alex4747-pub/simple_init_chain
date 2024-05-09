@@ -20,8 +20,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef INITCHAINTAGGED_H_
-#define INITCHAINTAGGED_H_
+#ifndef INIT_CHAIN_TAGGED_H_
+#define INIT_CHAIN_TAGGED_H_
 
 #include <functional>
 #include <mutex>  // NOLINT we need the standard mutex
@@ -33,8 +33,7 @@
 // This version uses template tag type to support
 // multiple chains
 //
-// See README.md and comments in InitChain.inl for
-// detais
+// See README.md and comments in init_chain.inc for details
 //
 
 namespace simple {
@@ -49,7 +48,7 @@ namespace simple {
 
 template <typename TAG, typename RUN_MUTEX = std::mutex,
           typename LINK_MUTEX = std::mutex>
-#include "InitChain.inl"
+#include "init_chain.inc"
 
 template <typename TAG, typename RUN_MUTEX, typename LINK_MUTEX>
 bool InitChain<TAG, RUN_MUTEX, LINK_MUTEX>::AllowReset() {
@@ -59,4 +58,4 @@ bool InitChain<TAG, RUN_MUTEX, LINK_MUTEX>::AllowReset() {
 
 }  // namespace simple
 
-#endif  // INITCHAINTAGGED_H_
+#endif  // INIT_CHAIN_TAGGED_H_

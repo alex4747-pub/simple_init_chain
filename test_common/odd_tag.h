@@ -20,10 +20,10 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_EVENTAG_H_
-#define TEST_COMMON_EVENTAG_H_
+#ifndef TEST_COMMON_ODD_TAG_H_
+#define TEST_COMMON_ODD_TAG_H_
 
 // Just define a tag type for tagged tests
-struct Even {};
+struct Odd {};
 
-#endif  // TEST_COMMON_EVENTAG_H_
+#endif  // TEST_COMMON_ODD_TAG_H_

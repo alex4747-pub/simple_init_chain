@@ -20,10 +20,44 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_ODDTAG_H_
-#define TEST_COMMON_ODDTAG_H_
+#ifndef TEST_COMMON_TEST_COMMON_H_
+#define TEST_COMMON_TEST_COMMON_H_
 
-// Just define a tag type for tagged tests
-struct Odd {};
+// We have two ways of providing multiple
+// chains: using namespace and template
+// tags
 
-#endif  // TEST_COMMON_ODDTAG_H_
+// Namespace customization
+#if defined(USE_NS_EVEN)
+
+#include <even_init_chain.h>
+#define INIT_CHAIN even::InitChain
+
+#elif defined(USE_NS_ODD)
+
+#include <odd_init_chain.h>
+#define INIT_CHAIN odd::InitChain
+
+#else
+
+#if defined(USE_TAG_EVEN)
+
+#include <even_tag.h>
+#include <init_chain_tagged.h>
+#define INIT_CHAIN simple::InitChain<Even>
+
+#elif defined(USE_TAG_ODD)
+
+#include <init_chain_tagged.h>
+#include <odd_tag.h>
+#define INIT_CHAIN simple::InitChain<Odd>
+
+#else
+
+#include <init_chain.h>
+#define INIT_CHAIN simple::InitChain
+
+#endif  // Tag customization
+#endif  // Namesapce customization
+
+#endif  // TEST_COMMON_TEST_COMMON_H_

@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)Run
+// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -20,36 +20,48 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_EVENINITCHAIN_H_
-#define TEST_COMMON_EVENINITCHAIN_H_
+#ifndef TEST_COMMON_COMP_D_H_
+#define TEST_COMMON_COMP_D_H_
 
-#include <cassert>
-#include <cstddef>
-#include <functional>
-#include <iostream>
-#include <mutex>  // NOLINT we need the standard mutex
-
-#if __cplusplus < 201103L
-#error "At least c++11 is required"
-#endif
-
-// This the default version. It places init chain code
-// into the 'simple' namespace.
+// D-component is a special case we can arm failures
+// or exception.
 //
-// Users can add additional independent chains by placing them
-// into namespaces of their choice
-//
-// See README.md and comments in InitChain.inl for
-// detais
-//
+// We use static member of class it is preferred way
+// preventing multiple chain links to be initializing
+// the same class
 
-namespace even {
+// The application is a singleton
+class CompD {
+ public:
+  CompD& GetInstance() noexcept;
 
-#define RUN_MUTEX_TYPEDEF using RUN_MUTEX = std::mutex;
-#define LINK_MUTEX_TYPEDEF using LINK_MUTEX = std::mutex;
+  // Just an example of unrelated function
+  int GetCounter() noexcept;
 
-#include "InitChain.inl"
+  // Component D does not have Check function
+  // it will be explicitly loaded by dlopen.
 
-}  // namespace even
+  static void ArmFailure() noexcept;
+  static void ArmException() noexcept;
 
-#endif  // TEST_COMMON_EVENINITCHAIN_H_
+ private:
+  CompD() noexcept;
+  ~CompD();
+
+  int counter_;
+
+  static CompD* self_;
+  static bool failure_armed_;
+  static bool exception_armed_;
+
+  // We use levels for logging so it is a member of the class
+  static int const init_level_;
+
+  // Initialization helper class
+  class Helper;
+
+  // Static instance of helper class
+  static Helper helper_;
+};
+
+#endif  // TEST_COMMON_COMP_D_H_

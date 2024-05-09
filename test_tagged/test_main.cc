@@ -19,11 +19,11 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-#include <EvenTag.h>
-#include <InitChainTagged.h>
-#include <OddTag.h>
-#include <Recorder.h>
+#include <even_tag.h>
 #include <getopt.h>
+#include <init_chain_tagged.h>
+#include <odd_tag.h>
+#include <recorder.h>
 
 #include <cassert>
 #include <iostream>

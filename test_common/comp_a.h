@@ -20,29 +20,19 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_COMPC_H_
-#define TEST_COMMON_COMPC_H_
+#ifndef TEST_COMMON_COMP_A_H_
+#define TEST_COMMON_COMP_A_H_
 
-// This example demonstrates several more variants:
-//
-// 1. We derive from the ChainLink and use it as a
-//    static member: in examples a and b we used base
-//    ChainLink
-//
-// 2. The derived class is forward declared and non-public,
-//    we do not need neither forward declaration of the
-//    ChainLink nor include of the ChainLink.h
-//
-// 3. We pass member functions of the derived class
-//    to the base ChainLink: in examples a and be we
-//    passed static functons
-//
-// 4. We also demostrate inclusion of Reset functionality
-//    by compile time #define
+#include <test_common.h>
 
-class CompC {
+// The simplest form of initialization  we expose chain-link
+// in the interface the chain-link object is a static member
+// of the class. There is no reset operation;
+
+// Application is a singleton
+class CompA {
  public:
-  CompC& GetInstance() noexcept;
+  CompA& GetInstance() noexcept;
 
   // Just an example of unrelated function
   int GetCounter() noexcept;
@@ -51,20 +41,21 @@ class CompC {
   // will cause share library to be included into image by linker
   static bool Check() noexcept;
 
+  static INIT_CHAIN::Link& GetLink() { return init_helper_; }
+
  private:
-  CompC() noexcept;
-  ~CompC();
+  CompA() noexcept;
+  ~CompA();
 
   int counter_;
+  static CompA* self_;
 
-  static CompC* self_;
+  static bool Init();
 
-  // We use levels for logging so it is a member of the class
+  // We use levels for test verification so it is a member of the class
   static int const init_level_;
 
-  class InitHelper;
-
-  static InitHelper init_helper_;
+  static INIT_CHAIN::Link init_helper_;
 };
 
-#endif  // TEST_COMMON_COMPC_H_
+#endif  // TEST_COMMON_COMP_A_H_

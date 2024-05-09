@@ -19,12 +19,12 @@ CPPLINT = cpplint
 
 
 COMMON_SRCS = \
-     $(COMMON)/CompA.cc \
-     $(COMMON)/CompB.cc \
-     $(COMMON)/CompC.cc \
-     $(COMMON)/CompD.cc \
-     $(COMMON)/CompE.cc \
-     $(COMMON)/Recorder.cc
+     $(COMMON)/comp_a.cc \
+     $(COMMON)/comp_b.cc \
+     $(COMMON)/comp_c.cc \
+     $(COMMON)/comp_d.cc \
+     $(COMMON)/comp_e.cc \
+     $(COMMON)/recorder.cc
 
 MAIN_SRCS = \
      test_main.cc
@@ -32,19 +32,19 @@ MAIN_SRCS = \
 SRCS = $(COMMON_SRCS) $(MAIN_SRCS)
 
 DEP_INCS = \
-     $(COMMON)/EvenTag.h \
-     $(COMMON)/OddTag.h \
-     $(COMMON)/Recorder.h \
-     $(COMMON)/TestCommon.h \
-     ../InitChainTagged.h \
-     ../InitChain.inl
+     $(COMMON)/even_tag.h \
+     $(COMMON)/odd_tag.h \
+     $(COMMON)/recorder.h \
+     $(COMMON)/test_common.h \
+     ../init_chain_tagged.h \
+     ../init_chain.inc
 
 INCS = \
-     $(COMMON)/CompA.h \
-     $(COMMON)/CompB.h \
-     $(COMMON)/CompC.h \
-     $(COMMON)/CompD.h \
-     $(COMMON)/CompE.h \
+     $(COMMON)/comp_a.h \
+     $(COMMON)/comp_b.h \
+     $(COMMON)/comp_c.h \
+     $(COMMON)/comp_d.h \
+     $(COMMON)/comp_e.h \
      $(COMP_INCS) \
      $(DEP_INCS)
 
@@ -52,34 +52,34 @@ TMP_COMMON_SRCS = $(notdir $(COMMON_SRCS))
 COMMON_OBJS = $(patsubst %.cc, %.o, $(TMP_COMMON_SRCS))
 
 TIDY_SRCS_EVEN = \
-     $(COMMON)/CompA.cc \
-     $(COMMON)/CompC.cc \
-     $(COMMON)/CompE.cc \
-     $(COMMON)/Recorder.cc \
+     $(COMMON)/comp_a.cc \
+     $(COMMON)/comp_c.cc \
+     $(COMMON)/comp_e.cc \
+     $(COMMON)/recorder.cc \
      ./test_main.cc	
 
 TIDY_INCS_EVEN = \
-     $(COMMON)/CompA.h \
-     $(COMMON)/CompC.h \
-     $(COMMON)/CompE.h \
-     $(COMMON)/EvenTag.h \
-     $(COMMON)/Recorder.h \
-     $(COMMON)/TestCommon.h \
-     ../InitChainTagged.h \
+     $(COMMON)/comp_a.h \
+     $(COMMON)/comp_c.h \
+     $(COMMON)/comp_e.h \
+     $(COMMON)/even_tag.h \
+     $(COMMON)/recorder.h \
+     $(COMMON)/test_comon.h \
+     ../init_chain_tagged.h \
 
 TIDY_SRCS_ODD = \
-     $(COMMON)/CompB.cc \
-     $(COMMON)/CompD.cc \
-     $(COMMON)/Recorder.cc \
+     $(COMMON)/comp_b.cc \
+     $(COMMON)/comp_d.cc \
+     $(COMMON)/recorder.cc \
      ./test_main.cc	
 
 TIDY_INCS_ODD = \
-     $(COMMON)/CompB.h \
-     $(COMMON)/CompD.h \
-     $(COMMON)/OddTag.h \
-     $(COMMON)/Recorder.h \
-     $(COMMON)/TestCommon.h \
-     ../InitChainTagged.h \
+     $(COMMON)/comp_b.h \
+     $(COMMON)/comp_d.h \
+     $(COMMON)/odd_tag.h \
+     $(COMMON)/recorder.h \
+     $(COMMON)/test_comon.h \
+     ../init_chain_tagged.h \
 
 all: test_tagged_init_chain
 
@@ -89,19 +89,19 @@ test_tagged_init_chain: test_main.o $(COMMON_OBJS)
 %.o: $(COMMON)/%.cc $(COMMON)/%.h $(DEP_INCS)
 	$(CXX) -c $(CXXFLAGS) $<
 
-CompA.o: $(COMMON)/CompA.cc $(COMMON)/CompA.h $(DEP_INCS)
+comp_a.o: $(COMMON)/comp_a.cc $(COMMON)/comp_a.h $(DEP_INCS)
 	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_EVEN $<
 
-CompB.o: $(COMMON)/CompB.cc $(COMMON)/CompB.h $(DEP_INCS)
+comp_b.o: $(COMMON)/comp_b.cc $(COMMON)/comp_b.h $(DEP_INCS)
 	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_ODD $<
 
-CompC.o: $(COMMON)/CompC.cc $(COMMON)/CompC.h $(DEP_INCS)
+comp_c.o: $(COMMON)/comp_c.cc $(COMMON)/comp_c.h $(DEP_INCS)
 	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_EVEN $<
 
-CompD.o: $(COMMON)/CompD.cc $(COMMON)/CompD.h $(DEP_INCS)
+comp_d.o: $(COMMON)/comp_d.cc $(COMMON)/comp_d.h $(DEP_INCS)
 	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_ODD $<
 
-CompE.o: $(COMMON)/CompE.cc $(COMMON)/CompE.h $(DEP_INCS)
+comp_e.o: $(COMMON)/comp_e.cc $(COMMON)/comp_e.h $(DEP_INCS)
 	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_EVEN $<
 
 test_main.o: test_main.cc $(INCS)
@@ -125,8 +125,5 @@ run-test: test_tagged_init_chain
 	@echo "Main test"
 	./test_tagged_init_chain
 	@echo
-
-print:
-	$(CXX) -c $(CXXFLAGS) -DUSE_TAG_EVEN -DRUNNING_CPP_TIDY=2 ../test_common/CompA.cc
 
 

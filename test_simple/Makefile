@@ -19,12 +19,12 @@ CPPLINT = cpplint
 
 
 COMMON_SRCS = \
-     $(COMMON)/CompA.cc \
-     $(COMMON)/CompB.cc \
-     $(COMMON)/CompC.cc \
-     $(COMMON)/CompD.cc \
-     $(COMMON)/CompE.cc \
-     $(COMMON)/Recorder.cc
+     $(COMMON)/comp_a.cc \
+     $(COMMON)/comp_b.cc \
+     $(COMMON)/comp_c.cc \
+     $(COMMON)/comp_d.cc \
+     $(COMMON)/comp_e.cc \
+     $(COMMON)/recorder.cc
 
 MAIN_SRCS = \
      test_main.cc
@@ -32,17 +32,17 @@ MAIN_SRCS = \
 SRCS = $(COMMON_SRCS) $(MAIN_SRCS)
 
 DEP_INCS = \
-     $(COMMON)/Recorder.h \
-     $(COMMON)/TestCommon.h \
-     ../InitChain.h \
-     ../InitChain.inl
+     $(COMMON)/recorder.h \
+     $(COMMON)/test_common.h \
+     ../init_chain.h \
+     ../init_chain.inc
 
 INCS = \
-     $(COMMON)/CompA.h \
-     $(COMMON)/CompB.h \
-     $(COMMON)/CompC.h \
-     $(COMMON)/CompD.h \
-     $(COMMON)/CompE.h \
+     $(COMMON)/comp_a.h \
+     $(COMMON)/comp_b.h \
+     $(COMMON)/comp_c.h \
+     $(COMMON)/comp_d.h \
+     $(COMMON)/comp_e.h \
      $(COMP_INCS) \
      $(DEP_INCS)
 

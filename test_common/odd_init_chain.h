@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)
+// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)Run
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -20,44 +20,35 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_TESTCOMMON_H_
-#define TEST_COMMON_TESTCOMMON_H_
+#ifndef TEST_COMMON_ODD_INIT_CHAIN_H_
+#define TEST_COMMON_ODD_INIT_CHAIN_H_
 
-// We have two ways of providing multiple
-// chains: using namespace and template
-// tags
+#include <cassert>
+#include <cstddef>
+#include <functional>
+#include <iostream>
+#include <mutex>  // NOLINT we need the standard mutex
 
-// Namespace customization
-#if defined(USE_NS_EVEN)
+#if __cplusplus < 201103L
+#error "At least c++11 is required"
+#endif
 
-#include <EvenInitChain.h>
-#define INIT_CHAIN even::InitChain
+// This the default version. It places init chain code
+// into the 'simple' namespace.
+//
+// Users can add additional independent chains by placing them
+// into namespaces of their choice
+//
+// See README.md and comments in init_chain.inc for details
+//
 
-#elif defined(USE_NS_ODD)
+namespace odd {
 
-#include <OddInitChain.h>
-#define INIT_CHAIN odd::InitChain
+#define RUN_MUTEX_TYPEDEF using RUN_MUTEX = std::mutex;
+#define LINK_MUTEX_TYPEDEF using LINK_MUTEX = std::mutex;
 
-#else
+#include "init_chain.inc"
 
-#if defined(USE_TAG_EVEN)
+}  // namespace odd
 
-#include <EvenTag.h>
-#include <InitChainTagged.h>
-#define INIT_CHAIN simple::InitChain<Even>
-
-#elif defined(USE_TAG_ODD)
-
-#include <InitChainTagged.h>
-#include <OddTag.h>
-#define INIT_CHAIN simple::InitChain<Odd>
-
-#else
-
-#include <InitChain.h>
-#define INIT_CHAIN simple::InitChain
-
-#endif  // Tag customization
-#endif  // Namesapce customization
-
-#endif  // TEST_COMMON_TESTCOMMON_H_
+#endif  // TEST_COMMON_ODD_INIT_CHAIN_H_

@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)Run
+// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -20,36 +20,42 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_ODDINITCHAIN_H_
-#define TEST_COMMON_ODDINITCHAIN_H_
+#ifndef TEST_COMMON_COMP_B_H_
+#define TEST_COMMON_COMP_B_H_
 
-#include <cassert>
-#include <cstddef>
-#include <functional>
-#include <iostream>
-#include <mutex>  // NOLINT we need the standard mutex
+#include <test_common.h>
 
-#if __cplusplus < 201103L
-#error "At least c++11 is required"
-#endif
-
-// This the default version. It places init chain code
-// into the 'simple' namespace.
-//
-// Users can add additional independent chains by placing them
-// into namespaces of their choice
-//
-// See README.md and comments in InitChain.inl for
-// detais
+// A simple form of initialization: the chain-link object
+// is a static member of the class.
 //
 
-namespace odd {
+// Application is a singleton
+class CompB {
+ public:
+  CompB& GetInstance() noexcept;
 
-#define RUN_MUTEX_TYPEDEF using RUN_MUTEX = std::mutex;
-#define LINK_MUTEX_TYPEDEF using LINK_MUTEX = std::mutex;
+  // Just an example of unrelated function
+  int GetCounter() noexcept;
 
-#include "InitChain.inl"
+  // If shared library is used call to this function from main
+  // will cause share library to be included into image by linker
+  static bool Check() noexcept;
 
-}  // namespace odd
+ private:
+  CompB() noexcept;
+  ~CompB();
 
-#endif  // TEST_COMMON_ODDINITCHAIN_H_
+  static bool Init();
+  static bool Reset();
+
+  int counter_;
+
+  static CompB* self_;
+
+  // We use levels for logging so it is a member of the class
+  static int const init_level_;
+
+  static INIT_CHAIN::Link init_helper_;
+};
+
+#endif  // TEST_COMMON_COMP_B_H_

@@ -1,4 +1,4 @@
-// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)
+// Copyright (C) 2020  Aleksey Romanov (aleksey at voltanet dot io)Run
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -20,42 +20,35 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TEST_COMMON_COMPA_H_
-#define TEST_COMMON_COMPA_H_
+#ifndef INIT_CHAIN_H_
+#define INIT_CHAIN_H_
 
-#include <TestCommon.h>
+#include <functional>
+#include <mutex>  // NOLINT we need the standard mutex
 
-// The simplest form of initialization  we expose chain-link
-// in the interface the chain-link object is a static member
-// of the class. There is no reset operation;
+#if __cplusplus < 201103L
+#error "At least c++11 is required"
+#endif
 
-// Application is a singleton
-class CompA {
- public:
-  CompA& GetInstance() noexcept;
+// This the default version. It places init chain code
+// into the 'simple' namespace.
+//
+// Users can add additional independent chains by placing them
+// into namespaces of their choice
+//
+// See README.md and comments in init_chain.inc for details
+//
 
-  // Just an example of unrelated function
-  int GetCounter() noexcept;
+namespace simple {
 
-  // If shared library is used call to this function from main
-  // will cause share library to be included into image by linker
-  static bool Check() noexcept;
+// We have to provide typdefs for mutexes Note: these typedefs
+// are completely encapsulated inside the InitChain class
 
-  static INIT_CHAIN::Link& GetLink() { return init_helper_; }
+#define RUN_MUTEX_TYPEDEF using RUN_MUTEX = std::mutex;
+#define LINK_MUTEX_TYPEDEF using LINK_MUTEX = std::mutex;
 
- private:
-  CompA() noexcept;
-  ~CompA();
+#include "init_chain.inc"
 
-  int counter_;
-  static CompA* self_;
+}  // namespace simple
 
-  static bool Init();
-
-  // We use levels for test verification so it is a member of the class
-  static int const init_level_;
-
-  static INIT_CHAIN::Link init_helper_;
-};
-
-#endif  // TEST_COMMON_COMPA_H_
+#endif  // INIT_CHAIN_H_
